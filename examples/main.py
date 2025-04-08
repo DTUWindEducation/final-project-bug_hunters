@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd 
 import xarray as xr 
 import matplotlib as plt 
-import src
+import  src.WRA_Package as WRA_Package
 
 FILE_PATH = Path(__file__)      # path to this file
 FILE_DIR = FILE_PATH.parent.parent     # path to main folder 
@@ -18,4 +18,4 @@ DATA_15_17 = DATA_DIR / '2015-2017.nc'
 DATA_18_20 = DATA_DIR / '2018-2020.nc'
 DATA_21_23 = DATA_DIR / '2021-2023.nc'
 
-data = src.load_data(DATA_00_02)
+data = WRA_Package.load_data(DATA_00_02)
