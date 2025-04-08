@@ -5,7 +5,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "WRA_FP"
+name = "WRA_Package"
 version = "0.0.1"
 description = "Package to investigate wind resource assesment from reanalysis data"
 authors = [
