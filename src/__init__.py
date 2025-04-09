@@ -8,7 +8,7 @@ def load_wind_data(path_nc, level="100m"):
     Load wind data from NetCDF and calculate wind speed from u and v components.
 
     Parameters:
-        filepath (str): Path to NetCDF4 file.
+        path_nc (str): Path to NetCDF4 file.
         level (str): Height level, e.g., '10m' or '100m'.
 
     Returns:
@@ -18,8 +18,14 @@ def load_wind_data(path_nc, level="100m"):
     ds = xr.open_dataset(path_nc)
 
     # Extract u and v components wind data
-    u = ds[f"{level}_u"]
-    v = ds[f"{level}_v"]
+    if level == "100m":
+        u = ds["u100"]
+        v = ds["v100"]
+    elif level == "10m":
+        u = ds["u10"]
+        v = ds["v10"]
+    else:
+        raise ValueError("Unsupported height level. Use '10m' or '100m'.")
     
     # Calculate wind speed from u and v components
     wind_speed = np.sqrt(u**2 + v**2)

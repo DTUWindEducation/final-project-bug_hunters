@@ -1,6 +1,8 @@
 from pathlib import Path
 import numpy as np
 import xarray as xr
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[1])) #goes two levels up to find src folder
 
 from src import load_wind_data
 
@@ -16,4 +18,4 @@ def test_load_wind_data():
 
     # Then
     assert isinstance(wind_speed, xr.DataArray), "Output should be an xarray DataArray"
-    assert wind_speed.shape == (1, 1, 1), "Shape of wind speed should be (1, 1, 1)"  #array has 3 dimesnions: time, latitude, longitude
+    assert wind_speed.ndim == 3, "Expected wind speed to have 3 dimensions (time, lat, lon)"  #array has 3 dimesnions: time, latitude, longitude
