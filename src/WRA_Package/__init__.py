@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
+from scipy.interpolate import griddata
 
 
 def load_data(file_path):
@@ -20,9 +21,13 @@ def load_data(file_path):
         lat: latitude values (float64)
         lon: longitude values (float64)
     """
-    wind_data = xr.open_dataset(file_path)
-    WindData = wind_data.to_dataframe().reset_index()
-    return WindData
+    data = xr.open_dataset(file_path)
+    df = data.to_dataframe().reset_index()
+
+    # changing names of lat and long columns since they are incorrectly labeled
+    df = df.rename(columns={'latitude':'_tmp','longitude':'latitude'})
+    df = df.rename(columns={'_tmp':'longitude'})
+    return df
 
 
 def conc_data(files_list):
@@ -40,38 +45,112 @@ def conc_data(files_list):
     pd.DataFrame
         A single DataFrame with all the rows from each file.
     """
-    WindDataConc = []
+    df_concat = []
     for file in files_list:
         # assume load_data returns a DataFrame with exactly these columns:
         # ["valid_time","latitude","longitude","u10","v10","u100","v100"]
-        WindData = load_data(file)  
-        WindDataConc.append(WindData)
+        df = load_data(file)  
+        df_concat.append(df)
 
     # one-shot concatenation
-    concDF = pd.concat(WindDataConc, axis=0, ignore_index=True)
-    return concDF
+    ConcatDF = pd.concat(df_concat, axis=0, ignore_index=True)
+    return ConcatDF
 
-def compute_wind_speed_time_series(dataframe, latitude, longitude, height = 10):
-    if (latitude == 55.5 & longitude == 7.75) or (latitude == 55.5 & longitude == 8) or (latitude == 55.75 & longitude == 7.75) or (latitude == 55.75 & longitude == 8): 
-        windspeed = dataframe.loc[(dataframe['latitude'] >= latitude) & (dataframe['longitude'] <= longitude)]
+
+def plot_wind_time_series(df, level=10):
+    fig, axs = plt.subplots(2,1,figsize=(12,6))
+    axs[0].plot(df['time'],df['speed'])
+    axs[0].set_title(f"Wind Speed Time Series at {level} m")
+    axs[0].set_xlabel('Time')
+    axs[0].set_ylabel('Wind Speed [m/s]')
+    axs[0].grid(True)
+
+    axs[1].plot(df['time'],df['direction'])
+    axs[1].set_title(f"Wind Direction Time Series at {level} m")
+    axs[1].set_xlabel('Time')
+    axs[1].set_ylabel('Wind Direction [deg]')
+    axs[1].grid(True)
+    fig.tight_layout()
+    return fig, axs
+
+
+
+def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, latitude, longitude, height=10):
+    # Check if the point is exactly on a grid point
+    if (latitude, longitude) in grid_points:
+        winddata = dataFrame.loc[(dataFrame['latitude'] == latitude) & 
+                                 (dataFrame['longitude'] == longitude)]
         if height == 10:
-            u = windspeed['u10']
-            v = windspeed['v10']
-        elif height == 100: 
-            u = windspeed['u100']
-            v = windspeed['v100']
-        else: 
-            raise ValueError("Invalid height entry. Enter either 10 or 100")
+            u = winddata['u10']
+            v = winddata['v10']
+            time_values = winddata['valid_time']
+        elif height == 100:
+            u = winddata['u100']
+            v = winddata['v100']
+            time_values = winddata['valid_time']
+        else:
+            raise ValueError("Invalid height entry. Enter either 10 or 100.")
+        dir_rad = np.arctan2(-u, -v)  # Note: Using arctan2 directly for correct quadrant
+        dir_deg = (dir_rad * 180 / np.pi) % 360
+        dir_deg = dir_deg
         speed = np.sqrt(u**2 + v**2)
-        time = windspeed['valid_time']
+        speed = speed
+        time = time_values
 
+    else:
+        # Interpolate for points within the grid
+        if not (55.5 <= latitude <= 55.75 and 7.75 <= longitude <= 8.0):
+            raise ValueError("Coordinates are outside the interpolation grid.")
+        
+        # Prepare data for interpolation
+        points = []
+        u_values = []
+        v_values = []
+        time_values = []
+        
+        for lat, lon in grid_points:
+            point_data = dataFrame.loc[(dataFrame['latitude'] == lat) & 
+                                      (dataFrame['longitude'] == lon)]
+            points.append([lat, lon])
+            if height == 10:
+                u_values.append(point_data['u10'].values)
+                v_values.append(point_data['v10'].values)
+                time_values.append(point_data['valid_time'].values)
+            elif height == 100:
+                u_values.append(point_data['u100'].values)
+                v_values.append(point_data['v100'].values)
+                time_values.append(point_data['valid_time'].values)
+            else: 
+                raise ValueError("Invalid height entry. Enter either 10 or 100.")
+        
+        # Convert to numpy arrays
+        points = np.array(points)
+        u_values = np.array(u_values)
+        v_values = np.array(v_values)
+        time_values = np.array(time_values)
+        
+        # Perform interpolation using griddata
+        u_interp = griddata(points, u_values, (latitude, longitude), method='linear')
+        v_interp = griddata(points, v_values, (latitude, longitude), method='linear')
+        
+        u = np.array([u_interp])
+        v = np.array([v_interp])
 
+    
+        # Calculate wind direction and speed
+        dir_rad = np.arctan2(-u, -v)  # Note: Using arctan2 directly for correct quadrant
+        dir_deg = (dir_rad * 180 / np.pi) % 360
+        dir_deg = dir_deg[0]
+        speed = np.sqrt(u**2 + v**2)
+        speed = speed[0]
+        time = time_values[0]
 
+    df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg})
 
+    plot_wind_time_series(df, height)
+    
+    return df
 
-
-def time_series(wind_speed, latitude, longitude): 
-    time_series = wind_speed.sel(latitude=latitude, longitude=longitude, method="nearest")
 
 
 def plot_wind_speed_histogram(time_series_data, level="100m"):
@@ -92,17 +171,6 @@ def plot_wind_speed_histogram(time_series_data, level="100m"):
     return fig, axs
 
 
-def plot_wind_time_series(time_series_data, time, level=100):
-    fig, axs = plt.subplots(figsize=(12,6))
-    axs.plot(time,time_series_data)
-    axs.set_title(f"Wind Speed Time Series at {level} m")
-    axs.set_xlabel('Time')
-    axs.set_ylabel('Wind Speed [m/s]')
-    axs.grid(True)
-    fig.tight_layout()
-    return fig, axs
-
-
 # class GeneralWindTurbine():
 #     def __init__(rotor_diameter, hub_height, rated_power, v_in, v_rated, v_out, name = None):
 #         self.rotor_diameter = rotor_diameter
@@ -117,6 +185,3 @@ def plot_wind_time_series(time_series_data, time, level=100):
 
 
     
-
-
-
