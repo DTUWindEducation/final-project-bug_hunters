@@ -1,4 +1,4 @@
-#%%
+
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -57,26 +57,31 @@ def conc_data(files_list):
     return ConcatDF
 
 
-def plot_wind_time_series(df, level=10):
+def plot_wind_time_series(df, lat, lon, level=10):
     fig, axs = plt.subplots(2,1,figsize=(12,6))
     axs[0].plot(df['time'],df['speed'])
-    axs[0].set_title(f"Wind Speed Time Series at {level} m")
+    axs[0].set_title(f"Wind Speed Time Series at {level} m [{lat}° N,{lon}° E]")
     axs[0].set_xlabel('Time')
     axs[0].set_ylabel('Wind Speed [m/s]')
     axs[0].grid(True)
 
     axs[1].plot(df['time'],df['direction'])
-    axs[1].set_title(f"Wind Direction Time Series at {level} m")
+    axs[1].set_title(f"Wind Direction Time Series at {level} m [{lat}° N,{lon}° E]")
     axs[1].set_xlabel('Time')
     axs[1].set_ylabel('Wind Direction [deg]')
     axs[1].grid(True)
     fig.tight_layout()
+    plt.show()
     return fig, axs
 
 
 
 def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, latitude, longitude, height=10):
-    # Check if the point is exactly on a grid point
+    # ensuring that lat and lon are floats 
+    latitude = float(latitude)
+    longitude = float(longitude)
+
+    # check if the point is exactly on a grid point
     if (latitude, longitude) in grid_points:
         winddata = dataFrame.loc[(dataFrame['latitude'] == latitude) & 
                                  (dataFrame['longitude'] == longitude)]
@@ -99,7 +104,7 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
     else:
         # Interpolate for points within the grid
-        if not (55.5 <= latitude <= 55.75 and 7.75 <= longitude <= 8.0):
+        if not (55.50 <= latitude <= 55.75 and 7.75 <= longitude <= 8.00):
             raise ValueError("Coordinates are outside the interpolation grid.")
         
         # Prepare data for interpolation
@@ -147,9 +152,9 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
     df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg})
 
-    plot_wind_time_series(df, height)
+    fig, axs = plot_wind_time_series(df, latitude, longitude, height)
     
-    return df
+    return df, fig, axs
 
 
 
