@@ -235,34 +235,33 @@ def extrapolate_wind_speed(u_ref, z_ref, z_target, alpha=0.1):
     return u_ref * (z_target / z_ref) ** alpha
 
 
-# def fit_weibull_distribution(wind_speeds):
-#     """
-#     Fit Weibull distribution to wind speed data.
+def fit_weibull_distribution(wind_speeds):
+    """
+    Fit Weibull distribution to wind speed data.
 
-#     Parameters:
-#         wind_speeds: Wind speed time series [m/s]
+    Parameters:
+        wind_speeds: Wind speed time series [m/s]
 
-#     Returns:
-#         shape (float): Weibull shape parameter k
-#         scale (float): Weibull scale parameter A
-#     """
-#     shape, loc, scale = weibull_min.fit(wind_speeds, floc=0)  # force location to 0
-#     return shape, scale
+    Returns:
+        shape (float): Weibull shape parameter k
+        scale (float): Weibull scale parameter A
+    """
+    shape, loc, scale = weibull_min.fit(wind_speeds, floc=0)  # force location to 0
+    return shape, scale
 
-# def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
-#     fig, ax = plt.subplots(figsize=(12, 6))
-#     count, bins, _ = ax.hist(wind_speeds, bins=50, density=True, alpha=0.6, label='Wind Speed Histogram')
+def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
+    fig, ax = plt.subplots(figsize=(12, 6))
+    count, bins, _ = ax.hist(wind_speeds, bins=50, density=True, alpha=0.6, label='Wind Speed Histogram')
 
-#     x = np.linspace(min(bins), max(bins), 100)
-#     weibull_pdf = weibull_min.pdf(x, shape, loc=0, scale=scale)
-#     ax.plot(x, weibull_pdf, 'r-', lw=2, label='Fitted Weibull PDF')
+    x = np.linspace(min(bins), max(bins), 100)
+    weibull_pdf = weibull_min.pdf(x, shape, loc=0, scale=scale)
+    ax.plot(x, weibull_pdf, 'r-', lw=2, label='Fitted Weibull PDF')
 
-#     ax.set_title(f"Wind Speed Distribution & Weibull Fit at {level}")
-#     ax.set_xlabel("Wind Speed [m/s]")
-#     ax.set_ylabel("Probability Density")
-#     ax.legend()
-#     ax.grid(True)
-#     plt.tight_layout()
-#     return fig, ax
-
+    ax.set_title(f"Wind Speed Distribution & Weibull Fit at {level}")
+    ax.set_xlabel("Wind Speed [m/s]")
+    ax.set_ylabel("Probability Density")
+    ax.legend()
+    ax.grid(True)
+    plt.tight_layout()
+    return fig, ax
 

@@ -66,3 +66,13 @@ extrapolated_speed = wra.extrapolate_wind_speed(u_ref, reference_height, target_
 #print(f"\nExtrapolated wind speed to {target_height} m (first 5 values):\n", extrapolated_speed.head())
 
 
+# --- Fit Weibull distribution to extrapolated wind speed ---
+shape, scale = wra.fit_weibull_distribution(extrapolated_speed)
+
+print(f"\nWeibull distribution fitted parameters at {target_height} m:")
+print(f"Shape (k): {shape:.3f}")
+print(f"Scale (A): {scale:.3f}")
+
+# --- Plot histogram with Weibull PDF overlay ---
+fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed, shape, scale, level=f"{target_height}m")
+plt.show()
