@@ -27,18 +27,22 @@ data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08, DATA_09_11, DATA_12_
 # concatenate data to create a dataframe containting data for entire time-span  
 WindData = wra.conc_data(data_list)
 
+# user input for height 
+height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
+
 # plotting for each coordinate point 
 for lat, lon in grid_points: 
-    WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,lat,lon,10)
+    WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,lat,lon,height)
 
 # interpolation within grid for a point specified by user 
 # TODO: figure out how to add ValueError for inputs not of numerical values?
-interpolation_lat = input("Select latitude within the defined grid (between 55.5 - 55.75). The input must be a numberical value: ")
-interpolation_long = input("Select longitude within the defined grid (between 7.75 - 8.). The input must be a numberical value: ")
+interpolation_lat = input("Select latitude within the defined grid (between 55.50 and 55.75). The input must be a numberical value: ")
+interpolation_long = input("Select longitude within the defined grid (between 7.75 and 8.00). The input must be a numberical value: ")
+interpolation_height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
 
 interp_coords = [interpolation_lat, interpolation_long]
 
-WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,interp_coords[0],interp_coords[1],10)
+WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,interp_coords[0],interp_coords[1],interpolation_height)
 
 
 
