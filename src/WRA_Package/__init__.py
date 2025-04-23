@@ -249,7 +249,7 @@ def fit_weibull_distribution(wind_speeds):
     shape, loc, scale = weibull_min.fit(wind_speeds, floc=0)  # force location to 0
     return shape, scale
 
-def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level=f"{target_height}m"):
+def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     fig, ax = plt.subplots(figsize=(12, 6))
     count, bins, _ = ax.hist(wind_speeds, bins=50, density=True, alpha=0.6, label='Wind Speed Histogram')
 
