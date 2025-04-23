@@ -36,13 +36,33 @@ for lat, lon in grid_points:
 
 # interpolation within grid for a point specified by user 
 # TODO: figure out how to add ValueError for inputs not of numerical values?
-interpolation_lat = input("Select latitude within the defined grid (between 55.50 and 55.75). The input must be a numberical value: ")
-interpolation_long = input("Select longitude within the defined grid (between 7.75 and 8.00). The input must be a numberical value: ")
+interpolation_lat = float(input("Select latitude within the defined grid (between 55.50 and 55.75). The input must be a numberical value: "))
+interpolation_long = float(input("Select longitude within the defined grid (between 7.75 and 8.00). The input must be a numberical value: "))
 interpolation_height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
 
 interp_coords = [interpolation_lat, interpolation_long]
 
 WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,interp_coords[0],interp_coords[1],interpolation_height)
 
+# --- Extrapolate wind speed to a custom height ---
+reference_height = float(input("Enter reference height (either 10 or 100): "))
+target_height = float(input("Enter target height to extrapolate to (e.g., 90 or 150): "))
+alpha = float(input("Enter power law exponent alpha (default is 0.1): ") or 0.1)
+
+# Extract the appropriate wind speed time series
+if reference_height not in [10, 100]:
+    raise ValueError("Reference height must be 10 or 100 m.")
+
+# Filter original DataFrame to get wind speed at reference height
+if reference_height == interpolation_height:
+    u_ref = WindSpdDir["speed"]
+else:
+    raise ValueError("Reference height must match previously computed wind speed level.")
+
+# Extrapolate to new height
+extrapolated_speed = wra.extrapolate_wind_speed(u_ref, reference_height, target_height, alpha)
+
+# Print extrapolated time series, just to check
+#print(f"\nExtrapolated wind speed to {target_height} m (first 5 values):\n", extrapolated_speed.head())
 
 

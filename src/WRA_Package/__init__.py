@@ -1,10 +1,11 @@
-
+#%%
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
+from scipy.stats import weibull_min # Weibull distribution for wind speed
 
 
 def load_data(file_path):
@@ -57,31 +58,26 @@ def conc_data(files_list):
     return ConcatDF
 
 
-def plot_wind_time_series(df, lat, lon, level=10):
+def plot_wind_time_series(df, level=10):
     fig, axs = plt.subplots(2,1,figsize=(12,6))
     axs[0].plot(df['time'],df['speed'])
-    axs[0].set_title(f"Wind Speed Time Series at {level} m [{lat}° N,{lon}° E]")
+    axs[0].set_title(f"Wind Speed Time Series at {level} m")
     axs[0].set_xlabel('Time')
     axs[0].set_ylabel('Wind Speed [m/s]')
     axs[0].grid(True)
 
     axs[1].plot(df['time'],df['direction'])
-    axs[1].set_title(f"Wind Direction Time Series at {level} m [{lat}° N,{lon}° E]")
+    axs[1].set_title(f"Wind Direction Time Series at {level} m")
     axs[1].set_xlabel('Time')
     axs[1].set_ylabel('Wind Direction [deg]')
     axs[1].grid(True)
     fig.tight_layout()
-    plt.show()
     return fig, axs
 
 
 
 def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, latitude, longitude, height=10):
-    # ensuring that lat and lon are floats 
-    latitude = float(latitude)
-    longitude = float(longitude)
-
-    # check if the point is exactly on a grid point
+    # Check if the point is exactly on a grid point
     if (latitude, longitude) in grid_points:
         winddata = dataFrame.loc[(dataFrame['latitude'] == latitude) & 
                                  (dataFrame['longitude'] == longitude)]
@@ -104,7 +100,7 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
     else:
         # Interpolate for points within the grid
-        if not (55.50 <= latitude <= 55.75 and 7.75 <= longitude <= 8.00):
+        if not (55.5 <= latitude <= 55.75 and 7.75 <= longitude <= 8.0):
             raise ValueError("Coordinates are outside the interpolation grid.")
         
         # Prepare data for interpolation
@@ -152,9 +148,9 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
     df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg})
 
-    fig, axs = plot_wind_time_series(df, latitude, longitude, height)
+    plot_wind_time_series(df, height)
     
-    return df, fig, axs
+    return df
 
 
 
@@ -223,3 +219,50 @@ class WindTurbine(GeneralWindTurbine):
 
 
     
+def extrapolate_wind_speed(u_ref, z_ref, z_target, alpha=0.1):
+    """
+    Extrapolate wind speed using the power law profile.
+
+    Parameters:
+        u_ref (array-like): Wind speed at reference height [m/s]
+        z_ref (float): Reference height [m]
+        z_target (float): Target height [m]
+        alpha (float): Power law exponent (default 0.1 for offshore)
+
+    Returns:
+        array-like: Wind speed at target height
+    """
+    return u_ref * (z_target / z_ref) ** alpha
+
+
+# def fit_weibull_distribution(wind_speeds):
+#     """
+#     Fit Weibull distribution to wind speed data.
+
+#     Parameters:
+#         wind_speeds: Wind speed time series [m/s]
+
+#     Returns:
+#         shape (float): Weibull shape parameter k
+#         scale (float): Weibull scale parameter A
+#     """
+#     shape, loc, scale = weibull_min.fit(wind_speeds, floc=0)  # force location to 0
+#     return shape, scale
+
+# def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
+#     fig, ax = plt.subplots(figsize=(12, 6))
+#     count, bins, _ = ax.hist(wind_speeds, bins=50, density=True, alpha=0.6, label='Wind Speed Histogram')
+
+#     x = np.linspace(min(bins), max(bins), 100)
+#     weibull_pdf = weibull_min.pdf(x, shape, loc=0, scale=scale)
+#     ax.plot(x, weibull_pdf, 'r-', lw=2, label='Fitted Weibull PDF')
+
+#     ax.set_title(f"Wind Speed Distribution & Weibull Fit at {level}")
+#     ax.set_xlabel("Wind Speed [m/s]")
+#     ax.set_ylabel("Probability Density")
+#     ax.legend()
+#     ax.grid(True)
+#     plt.tight_layout()
+#     return fig, ax
+
+
