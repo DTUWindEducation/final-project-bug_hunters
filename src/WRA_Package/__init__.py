@@ -4,8 +4,11 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
+from windrose import WindroseAxes
+import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from scipy.stats import weibull_min # Weibull distribution for wind speed
+
 
 
 def load_data(file_path):
@@ -114,7 +117,7 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
                                       (dataFrame['longitude'] == lon)]
             points.append([lat, lon])
             if height == 10:
-                u_values.append(point_data['u10'].values)
+                u_values.append(point_data['u10'].values) #for all points - so it can be used for interpolation 
                 v_values.append(point_data['v10'].values)
                 time_values.append(point_data['valid_time'].values)
             elif height == 100:
@@ -154,6 +157,7 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
 
 
+
 def plot_wind_speed_histogram(time_series_data, level="100m"):
     """
     Plot histogram of wind speed.
@@ -170,6 +174,70 @@ def plot_wind_speed_histogram(time_series_data, level="100m"):
     axs.grid(True)
     fig.tight_layout()
     return fig, axs
+
+"""Part seven"""
+
+#################################################
+
+def count_directions_in_windrose_ranges(df):
+    """
+    Count how many rows in the DataFrame have 'direction' in specific wind rose ranges.
+
+    Parameters:
+        df (pd.DataFrame): DataFrame containing a 'direction' column.
+
+    Returns:
+        dict: A dictionary with counts for each wind rose range.
+    """
+    # Ensure the 'direction' column exists
+    if 'direction' not in df.columns:
+        raise ValueError("The DataFrame must contain a 'direction' column.")
+
+    # Define the wind rose ranges
+    ranges = [
+        (0, 45),
+        (45, 90),
+        (90, 135),
+        (135, 180),
+        (180, 225),
+        (225, 270),
+        (270, 315),
+        (315, 360)
+    ]
+
+    # Count rows in each range
+    range_counts = {}
+    for lower, upper in ranges:
+        count = ((df['direction'] >= lower) & (df['direction'] < upper)).sum()
+        range_counts[f"{lower}-{upper}"] = count
+
+    return range_counts
+
+################################
+
+def plot_wind_rose(wind_directions, wind_speeds, height="10m"):
+    """
+    Plot a wind rose diagram where the length of the bars represents wind speed.
+
+    Parameters:
+        wind_directions (array-like): Wind direction data in degrees (0-360).
+        wind_speeds (array-like): Wind speed data in m/s.
+        height (str): Height level for the title (e.g., "10m" or "100m").
+    """
+    from windrose import WindroseAxes
+    import matplotlib.pyplot as plt
+
+    # Create a wind rose plot
+    fig = plt.figure(figsize=(8, 8))
+    ax = WindroseAxes.from_ax(fig=fig)
+    
+    # Plot the wind rose with wind speeds determining the bar lengths
+    ax.bar(wind_directions, wind_speeds, normed=False, opening=0.8, edgecolor='white')
+
+    # Add labels and title
+    ax.set_title(f"Wind Rose Diagram at {height}", fontsize=14)
+    ax.set_legend(title="Wind Speed [m/s]", loc="lower right", fontsize=10)
+    plt.show()
 
 
 """Define classes"""
@@ -265,3 +333,5 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     plt.tight_layout()
     return fig, ax
 
+
+# %%
