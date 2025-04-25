@@ -19,6 +19,7 @@ DATA_15_17 = DATA_DIR / '2015-2017.nc'
 DATA_18_20 = DATA_DIR / '2018-2020.nc'
 DATA_21_23 = DATA_DIR / '2021-2023.nc'
 
+
 # define grid points as outlined by assignment
 grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
 
@@ -27,6 +28,11 @@ data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08, DATA_09_11, DATA_12_
 
 # concatenate data to create a dataframe containting data for entire time-span  
 WindData = wra.conc_data(data_list)
+
+
+# Print the WindData to check its contents (can be commented out later)
+# print("\n--- WindData Summary ---")
+# print(WindData)
 
 
 # user input for height 
@@ -79,3 +85,43 @@ print(f"Scale (A): {scale:.3f}")
 # --- Plot histogram with Weibull PDF overlay ---
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed, shape, scale, level=f"{target_height}m")
 plt.show()
+
+"""part 7 - windrose plot"""
+
+print(WindSpdDir) # Print the WindSpdDir DataFrame to check its contents
+
+# Call the function from WRA_Package
+result = wra.count_directions_in_windrose_ranges(WindSpdDir)
+
+# Print the result
+print(result)
+
+# Call the function to count wind directions in ranges
+range_counts = wra.count_directions_in_windrose_ranges(WindSpdDir)
+
+# Map the results to variables
+count_0 = range_counts.get("0-45", 0)
+count_45 = range_counts.get("45-90", 0)
+count_90 = range_counts.get("90-135", 0)
+count_135 = range_counts.get("135-180", 0)
+count_180 = range_counts.get("180-225", 0)
+count_225 = range_counts.get("225-270", 0)
+count_270 = range_counts.get("270-315", 0)
+count_315 = range_counts.get("315-360", 0)
+
+# Print the counts for verification
+print(f"Count 0-45: {count_0}")
+print(f"Count 45-90: {count_45}")
+print(f"Count 90-135: {count_90}")
+print(f"Count 135-180: {count_135}")
+print(f"Count 180-225: {count_180}")
+print(f"Count 225-270: {count_225}")
+print(f"Count 270-315: {count_270}")
+print(f"Count 315-360: {count_315}")
+
+# Example wind direction and speed data
+wind_directions = [0, 45, 90, 135, 180, 225, 270, 315]
+wind_speeds = [count_0, count_45, count_90, count_135, count_180, count_225, count_270, count_315]
+
+# Call the plot_wind_rose function from WRA_Package
+wra.plot_wind_rose(wind_directions, wind_speeds, height="10m")
