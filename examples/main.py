@@ -1,3 +1,4 @@
+
 from pathlib import Path
 import numpy as np 
 import pandas as pd 
@@ -28,9 +29,11 @@ data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08, DATA_09_11, DATA_12_
 # concatenate data to create a dataframe containting data for entire time-span  
 WindData = wra.conc_data(data_list)
 
+
 # Print the WindData to check its contents (can be commented out later)
 # print("\n--- WindData Summary ---")
 # print(WindData)
+
 
 # user input for height 
 height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
@@ -38,6 +41,7 @@ height = float(input("Select height at which wind speed and direction will be ca
 # plotting for each coordinate point 
 for lat, lon in grid_points: 
     WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,lat,lon,height)
+
 
 # interpolation within grid for a point specified by user 
 # TODO: figure out how to add ValueError for inputs not of numerical values?
