@@ -1,4 +1,4 @@
-
+#%%
 from pathlib import Path
 import numpy as np 
 import pandas as pd 
@@ -86,42 +86,9 @@ print(f"Scale (A): {scale:.3f}")
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed, shape, scale, level=f"{target_height}m")
 plt.show()
 
-"""part 7 - windrose plot"""
+#%%
+# call bin_wind_dir_data to preform binning of directions
+WindRoseDir = wra.bin_wind_dir_data(WindData,grid_points,interp_coords[0], interp_coords[1],target_height,12)
 
-print(WindSpdDir) # Print the WindSpdDir DataFrame to check its contents
 
-# Call the function from WRA_Package
-result = wra.count_directions_in_windrose_ranges(WindSpdDir)
-
-# Print the result
-print(result)
-
-# Call the function to count wind directions in ranges
-range_counts = wra.count_directions_in_windrose_ranges(WindSpdDir)
-
-# Map the results to variables
-count_0 = range_counts.get("0-45", 0)
-count_45 = range_counts.get("45-90", 0)
-count_90 = range_counts.get("90-135", 0)
-count_135 = range_counts.get("135-180", 0)
-count_180 = range_counts.get("180-225", 0)
-count_225 = range_counts.get("225-270", 0)
-count_270 = range_counts.get("270-315", 0)
-count_315 = range_counts.get("315-360", 0)
-
-# Print the counts for verification
-print(f"Count 0-45: {count_0}")
-print(f"Count 45-90: {count_45}")
-print(f"Count 90-135: {count_90}")
-print(f"Count 135-180: {count_135}")
-print(f"Count 180-225: {count_180}")
-print(f"Count 225-270: {count_225}")
-print(f"Count 270-315: {count_270}")
-print(f"Count 315-360: {count_315}")
-
-# Example wind direction and speed data
-wind_directions = [0, 45, 90, 135, 180, 225, 270, 315]
-wind_speeds = [count_0, count_45, count_90, count_135, count_180, count_225, count_270, count_315]
-
-# Call the plot_wind_rose function from WRA_Package
-wra.plot_wind_rose(wind_directions, wind_speeds, height="10m")
+# %%

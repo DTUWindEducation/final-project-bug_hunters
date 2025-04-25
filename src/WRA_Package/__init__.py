@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
-from windrose import WindroseAxes
 import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 from scipy.stats import weibull_min # Weibull distribution for wind speed
@@ -75,11 +74,12 @@ def plot_wind_time_series(df, lat, lon, level=10):
     axs[1].set_ylabel('Wind Direction [deg]')
     axs[1].grid(True)
     fig.tight_layout()
+    plt.show()
     return fig, axs
 
 
 
-def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, latitude, longitude, height=10):
+def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, latitude, longitude, height=10, display=True):
     # Check if the point is exactly on a grid point
     if (latitude, longitude) in grid_points:
         winddata = dataFrame.loc[(dataFrame['latitude'] == latitude) & 
@@ -179,10 +179,12 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
     df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg, 'u10': u_10, 'v10': v_10, 'u100': u_100, 'v100': v_100})
 
-    plot_wind_time_series(df,latitude, longitude, height)
+    if display == True: 
+        fig, axs = plot_wind_time_series(df,latitude, longitude, height)
+        return df, fig, axs
+    else: 
+        return df 
     
-    return df
-
 
 
 
@@ -202,70 +204,6 @@ def plot_wind_speed_histogram(time_series_data, level="100m"):
     axs.grid(True)
     fig.tight_layout()
     return fig, axs
-
-"""Part seven"""
-
-#################################################
-
-def count_directions_in_windrose_ranges(df):
-    """
-    Count how many rows in the DataFrame have 'direction' in specific wind rose ranges.
-
-    Parameters:
-        df (pd.DataFrame): DataFrame containing a 'direction' column.
-
-    Returns:
-        dict: A dictionary with counts for each wind rose range.
-    """
-    # Ensure the 'direction' column exists
-    if 'direction' not in df.columns:
-        raise ValueError("The DataFrame must contain a 'direction' column.")
-
-    # Define the wind rose ranges
-    ranges = [
-        (0, 45),
-        (45, 90),
-        (90, 135),
-        (135, 180),
-        (180, 225),
-        (225, 270),
-        (270, 315),
-        (315, 360)
-    ]
-
-    # Count rows in each range
-    range_counts = {}
-    for lower, upper in ranges:
-        count = ((df['direction'] >= lower) & (df['direction'] < upper)).sum()
-        range_counts[f"{lower}-{upper}"] = count
-
-    return range_counts
-
-################################
-
-def plot_wind_rose(wind_directions, wind_speeds, height="10m"):
-    """
-    Plot a wind rose diagram where the length of the bars represents wind speed.
-
-    Parameters:
-        wind_directions (array-like): Wind direction data in degrees (0-360).
-        wind_speeds (array-like): Wind speed data in m/s.
-        height (str): Height level for the title (e.g., "10m" or "100m").
-    """
-    from windrose import WindroseAxes
-    import matplotlib.pyplot as plt
-
-    # Create a wind rose plot
-    fig = plt.figure(figsize=(8, 8))
-    ax = WindroseAxes.from_ax(fig=fig)
-    
-    # Plot the wind rose with wind speeds determining the bar lengths
-    ax.bar(wind_directions, wind_speeds, normed=False, opening=0.8, edgecolor='white')
-
-    # Add labels and title
-    ax.set_title(f"Wind Rose Diagram at {height}", fontsize=14)
-    ax.set_legend(title="Wind Speed [m/s]", loc="lower right", fontsize=10)
-    plt.show()
 
 
 """Define classes"""
@@ -361,5 +299,68 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     plt.tight_layout()
     return fig, ax
 
+def bin_wind_dir_data(df, grid_points, latitude, longitude, height, num_bins=12):
 
-# %%
+    WR_data = compute_and_plot_wind_speed_direction_time_series(df, grid_points, latitude, longitude, height=10, display=False)
+
+    # Ensure the 'direction' column exists
+    if 'direction' not in WR_data.columns:
+        raise ValueError("The DataFrame must contain a 'direction' column.")
+    
+    if height != 10 and height != 100: 
+        if 'u10' not in WR_data.columns: 
+            raise ValueError("The DataFrame must contain a 'u10' column.")
+
+        u_ref = WR_data['u10']
+        z_ref = 10 
+        z_target = height
+        speed = extrapolate_wind_speed(u_ref, z_ref, z_target, alpha=0.1)
+        direction = WR_data['direction']
+    else: 
+        if 'speed' not in WR_data.columns: 
+            raise ValueError("The DataFrame must contain a 'u10' column.")
+        speed = WR_data['speed']
+        direction = WR_data['direction']
+
+    WRdf = pd.DataFrame({'speed': speed, 'direction': direction})
+
+    # Define the wind bin specifications
+    bin_width = 360 / num_bins 
+    bin_borders = np.arange(2 - bin_width/2, WRdf['direction'].max() + bin_width, bin_width)
+    bin_centres = bin_borders[:-1] + bin_width/2
+    
+    WRdf['wind_bin'] = pd.cut(WRdf['direction'], bins=bin_borders, labels=bin_centres, include_lowest=True)
+
+    WindRoseData = WRdf.groupby('wind_bin').agg(
+    wsp = ('speed', 'count'),
+    count = ('direction', 'count')
+    ).reset_index()
+
+    return WindRoseData
+
+
+# def plot_wind_rose(wind_directions, wind_speeds, height="10m"):
+#     """
+#     Plot a wind rose diagram where the length of the bars represents wind speed.
+
+#     Parameters:
+#         wind_directions (array-like): Wind direction data in degrees (0-360).
+#         wind_speeds (array-like): Wind speed data in m/s.
+#         height (str): Height level for the title (e.g., "10m" or "100m").
+#     """
+#     from windrose import WindroseAxes
+#     import matplotlib.pyplot as plt
+
+#     # Create a wind rose plot
+#     fig = plt.figure(figsize=(8, 8))
+#     ax = WindroseAxes.from_ax(fig=fig)
+    
+#     # Plot the wind rose with wind speeds determining the bar lengths
+#     ax.bar(wind_directions, wind_speeds, normed=False, opening=0.8, edgecolor='white')
+
+#     # Add labels and title
+#     ax.set_title(f"Wind Rose Diagram at {height}", fontsize=14)
+#     ax.set_legend(title="Wind Speed [m/s]", loc="lower right", fontsize=10)
+#     plt.show()
+
+
