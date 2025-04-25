@@ -28,9 +28,9 @@ data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08, DATA_09_11, DATA_12_
 # concatenate data to create a dataframe containting data for entire time-span  
 WindData = wra.conc_data(data_list)
 
-# Print the WindData to check its contents
-print("\n--- WindData Summary ---")
-print(WindData)
+# Print the WindData to check its contents (can be commented out later)
+# print("\n--- WindData Summary ---")
+# print(WindData)
 
 # user input for height 
 height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
@@ -82,7 +82,9 @@ print(f"Scale (A): {scale:.3f}")
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed, shape, scale, level=f"{target_height}m")
 plt.show()
 
-print(WindSpdDir)
+"""part 7 - windrose plot"""
+
+print(WindSpdDir) # Print the WindSpdDir DataFrame to check its contents
 
 # Call the function from WRA_Package
 result = wra.count_directions_in_windrose_ranges(WindSpdDir)
