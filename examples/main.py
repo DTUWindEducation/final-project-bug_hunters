@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd 
 import xarray as xr 
 import matplotlib.pyplot as plt 
+from matplotlib.pyplot import get_cmap
+from matplotlib.patches import Patch
 import WRA_Package as wra
 
 FILE_PATH = Path(__file__)      # path to this file
@@ -47,8 +49,6 @@ for height in time_series_heights:
         wra.compute_and_plot_wind_speed_direction_time_series(WindData,lat,lon,height)
 
 
-#%%
-
 # --- Extrapolate wind speed to a custom height ---
 # specify referance height
 reference_height = 10
@@ -62,8 +62,7 @@ alpha = 0.1
 if reference_height not in [10, 100]:
     raise ValueError("Reference height must be 10 or 100 m.")
 
-#%%
-
+# create data frame to append wind speeds at target height for each grid corner
 ExtrapolatedWindSpeed = pd.DataFrame({'Time': WindData['valid_time']})
 
 for lat, lon in locations[:-1]: 
@@ -80,11 +79,18 @@ for lat, lon in locations[:-1]:
     ExtrapolatedWindSpeed[f'({lat},{lon})'] = extrapolated_speed
 
 
+# use function to calculate wind spd and direction for location inside box at 10 m
+WindSpdDirWeibull = wra.compute_and_plot_wind_speed_direction_time_series(WindData,locations[-1][0], locations[-1][1], reference_height,display_figure=False)
 
+# set reference speed to the wind speed data calculated for location inside box at 10 m
+u_ref_weibull = WindSpdDirWeibull['speed']
+
+# use function to extrapolate the wind speed to target height 
+extrapolated_speed_weibull = wra.extrapolate_wind_speed(u_ref_weibull, reference_height, target_height, alpha)
 
 
 # --- Fit Weibull distribution to extrapolated wind speed ---
-shape, scale = wra.fit_weibull_distribution(extrapolated_speed)
+shape, scale = wra.fit_weibull_distribution(extrapolated_speed_weibull)
 
 print(f"\nWeibull distribution fitted parameters at {target_height} m:")
 print(f"Shape (k): {shape:.3f}")
@@ -93,9 +99,6 @@ print(f"Scale (A): {scale:.3f}")
 # --- Plot histogram with Weibull PDF overlay ---
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed, shape, scale, level=f"{target_height}m")
 plt.show()
-
-
-
 #%%
 # call bin_wind_dir_data to preform binning of directions
 dir_edges, spd_edges, H = wra.windrose_hist(WindSpdDir['direction'], WindSpdDir['speed'], 12)
