@@ -5,6 +5,8 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import get_cmap
+from matplotlib.patches import Patch
 from scipy.interpolate import griddata
 from scipy.stats import weibull_min # Weibull distribution for wind speed
 
@@ -79,7 +81,9 @@ def plot_wind_time_series(df, lat, lon, level=10):
 
 
 
-def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, latitude, longitude, height=10, display=True):
+def compute_and_plot_wind_speed_direction_time_series(dataFrame, latitude, longitude, height=10, display_figure = True):
+
+    grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
     # Check if the point is exactly on a grid point
     if (latitude, longitude) in grid_points:
         winddata = dataFrame.loc[(dataFrame['latitude'] == latitude) & 
@@ -179,7 +183,7 @@ def compute_and_plot_wind_speed_direction_time_series(dataFrame, grid_points, la
 
     df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg, 'u10': u_10, 'v10': v_10, 'u100': u_100, 'v100': v_100})
 
-    if display == True: 
+    if display_figure == True: 
         fig, axs = plot_wind_time_series(df,latitude, longitude, height)
         return df, fig, axs
     else: 
@@ -325,11 +329,11 @@ def bin_wind_dir_data(df, grid_points, latitude, longitude, height, num_bins=12)
     WRdf = pd.DataFrame({'speed': speed, 'direction': direction})
 
     # Define the wind bin specifications
-    bin_width = 360 / num_bins 
-    bin_borders = np.arange(2 - bin_width/2, WRdf['direction'].max() + bin_width, bin_width)
-    bin_centres = bin_borders[:-1] + bin_width/2
+    dir_bin_width = 360 / num_bins 
+    dir_bin_borders = np.arange(dir_bin_width/2, WRdf['direction'].max() + dir_bin_width, dir_bin_width)
+    dir_bin_centres = dir_bin_borders[:-1] + dir_bin_width/2
     
-    WRdf['wind_bin'] = pd.cut(WRdf['direction'], bins=bin_borders, labels=bin_centres, include_lowest=True)
+    WRdf['wind_bin'] = pd.cut(WRdf['direction'], bins=dir_bin_borders, labels=dir_bin_centres, include_lowest=True)
 
     WindRoseData = WRdf.groupby('wind_bin').agg(
     wsp = ('speed', 'count'),
