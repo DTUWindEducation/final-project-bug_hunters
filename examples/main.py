@@ -20,8 +20,16 @@ DATA_18_20 = DATA_DIR / '2018-2020.nc'
 DATA_21_23 = DATA_DIR / '2021-2023.nc'
 
 
-# define grid points as outlined by assignment
-grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
+# define locations for each grid point as outlined by assignment
+locations = [(55.5, 7.75), (55.5, 8.00), (55.75, 7.75), (55.75, 8.00)]
+
+# specifying a location within the grid to interpolate for
+interpolation_lat = 55.68
+interpolation_long = 7.82
+interp_coords = (interpolation_lat, interpolation_long)
+
+# adding interpolation coordinates to the locations
+locations.append(interp_coords)
 
 # create list with names of datafiles 
 data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08, DATA_09_11, DATA_12_14, DATA_15_17, DATA_18_20, DATA_21_23]
@@ -30,49 +38,49 @@ data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08, DATA_09_11, DATA_12_
 WindData = wra.conc_data(data_list)
 
 
-# Print the WindData to check its contents (can be commented out later)
-# print("\n--- WindData Summary ---")
-# print(WindData)
-
-
-# user input for height 
-height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
+# specifying which heights data should be plotted for in the time series 
+time_series_heights = [10, 100]
 
 # plotting for each coordinate point 
-for lat, lon in grid_points: 
-    WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,lat,lon,height)
+for height in time_series_heights: 
+    for lat, lon in locations: 
+        wra.compute_and_plot_wind_speed_direction_time_series(WindData,lat,lon,height)
 
 
-# interpolation within grid for a point specified by user 
-# TODO: figure out how to add ValueError for inputs not of numerical values?
-interpolation_lat = float(input("Select latitude within the defined grid (between 55.50 and 55.75). The input must be a numberical value: "))
-interpolation_long = float(input("Select longitude within the defined grid (between 7.75 and 8.00). The input must be a numberical value: "))
-interpolation_height = float(input("Select height at which wind speed and direction will be calculated. Enter either 10 or 100: "))
-
-interp_coords = [interpolation_lat, interpolation_long]
-
-WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,grid_points,interp_coords[0],interp_coords[1],interpolation_height)
+#%%
 
 # --- Extrapolate wind speed to a custom height ---
-reference_height = float(input("Enter reference height (either 10 or 100): "))
-target_height = float(input("Enter target height to extrapolate to (e.g., 90 or 150): "))
-alpha = float(input("Enter power law exponent alpha (default is 0.1): ") or 0.1)
+# specify referance height
+reference_height = 10
+# specify target height 
+target_height = 97
+# specify alpha
+alpha = 0.1
+
 
 # Extract the appropriate wind speed time series
 if reference_height not in [10, 100]:
     raise ValueError("Reference height must be 10 or 100 m.")
 
-# Filter original DataFrame to get wind speed at reference height
-if reference_height == interpolation_height:
-    u_ref = WindSpdDir["speed"]
-else:
-    raise ValueError("Reference height must match previously computed wind speed level.")
+#%%
 
-# Extrapolate to new height
-extrapolated_speed = wra.extrapolate_wind_speed(u_ref, reference_height, target_height, alpha)
+ExtrapolatedWindSpeed = pd.DataFrame({'Time': WindData['valid_time']})
 
-# Print extrapolated time series, just to check
-#print(f"\nExtrapolated wind speed to {target_height} m (first 5 values):\n", extrapolated_speed.head())
+for lat, lon in locations[:-1]: 
+    # call function to produce dataframe containing wind speed at each location
+    WindSpdDir = wra.compute_and_plot_wind_speed_direction_time_series(WindData,lat, lon, reference_height,display_figure=False)
+
+    # access dataframe and extract wind speed at location
+    u_ref = WindSpdDir['speed']
+
+    # Extrapolate speed at new height using function
+    extrapolated_speed = wra.extrapolate_wind_speed(u_ref, reference_height, target_height, alpha)
+
+    # Add speed at each location to dataframe 
+    ExtrapolatedWindSpeed[f'({lat},{lon})'] = extrapolated_speed
+
+
+
 
 
 # --- Fit Weibull distribution to extrapolated wind speed ---
@@ -86,9 +94,12 @@ print(f"Scale (A): {scale:.3f}")
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed, shape, scale, level=f"{target_height}m")
 plt.show()
 
+
+
 #%%
 # call bin_wind_dir_data to preform binning of directions
-WindRoseDir = wra.bin_wind_dir_data(WindData,grid_points,interp_coords[0], interp_coords[1],target_height,12)
+dir_edges, spd_edges, H = wra.windrose_hist(WindSpdDir['direction'], WindSpdDir['speed'], 12)
+wra.plot_windrose(dir_edges, spd_edges, H)
 
 
 # %%
