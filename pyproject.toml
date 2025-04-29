@@ -18,6 +18,9 @@ dependencies = [
     "numpy",
     "scipy",
     "tk"
+    "pandas"
+    "xarray" 
+    "windrose'
 
 ]
 

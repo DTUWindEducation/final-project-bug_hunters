@@ -5,6 +5,7 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
+from windrose import WindroseAxes
 from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 from scipy.interpolate import griddata
@@ -29,9 +30,6 @@ def load_data(file_path):
     data = xr.open_dataset(file_path)
     df = data.to_dataframe().reset_index()
 
-    # changing names of lat and long columns since they are incorrectly labeled
-    df = df.rename(columns={'latitude':'_tmp','longitude':'latitude'})
-    df = df.rename(columns={'_tmp':'longitude'})
     return df
 
 
@@ -81,7 +79,7 @@ def plot_wind_time_series(df, lat, lon, level=10):
 
 
 
-def compute_and_plot_wind_speed_direction_time_series(dataFrame, latitude, longitude, height=10, display_figure = True):
+def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, display_figure = True):
 
     grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
     # Check if the point is exactly on a grid point
@@ -209,53 +207,6 @@ def plot_wind_speed_histogram(time_series_data, level="100m"):
     fig.tight_layout()
     return fig, axs
 
-
-"""Define classes"""
-
-class GeneralWindTurbine:
-    def __init__(self, rotor_diameter, hub_height, rated_power, v_in, v_rated, v_out, name=None):
-        self.rotor_diameter = rotor_diameter
-        self.hub_height = hub_height
-        self.rated_power = rated_power
-        self.v_in = v_in
-        self.v_rated = v_rated
-        self.v_out = v_out
-        self.name = name
-
-    def get_power(self, wind_speed):
-        """
-        Compute power output [kW] for given wind_speed (scalar or numpy array).
-        """
-        wind_speed = np.array(wind_speed)
-
-        power_output = np.zeros_like(wind_speed)
-
-        # Region 2: cubic power law
-        mask_ramp = (wind_speed >= self.v_in) & (wind_speed < self.v_rated)
-        power_output[mask_ramp] = self.rated_power * (wind_speed[mask_ramp] / self.v_rated) ** 3
-
-        # Region 3: constant power
-        mask_flat = (wind_speed >= self.v_rated) & (wind_speed <= self.v_out)
-        power_output[mask_flat] = self.rated_power
-
-        # Other values remain zero
-
-        return power_output
-    
-class WindTurbine(GeneralWindTurbine):
-    def __init__(self, rotor_diameter, hub_height, rated_power, v_in, v_rated, v_out, power_curve_data, name=None):
-        super().__init__(rotor_diameter, hub_height, rated_power, v_in, v_rated, v_out, name)
-        self.power_curve_data = power_curve_data  # numpy array: [:, 0] = wind speed, [:, 1] = power
-
-    def get_power(self, wind_speed):
-        """
-        Compute power output using power curve data (interpolated).
-        """
-        wind_speed = np.array(wind_speed)
-        power = np.interp(wind_speed, self.power_curve_data[:, 0], self.power_curve_data[:, 1], left=0, right=0)
-        return power
-
-
     
 def extrapolate_wind_speed(u_ref, z_ref, z_target, alpha=0.1):
     """
@@ -303,68 +254,14 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     plt.tight_layout()
     return fig, ax
 
-def bin_wind_dir_data(df, grid_points, latitude, longitude, height, num_bins=12):
 
-    WR_data = compute_and_plot_wind_speed_direction_time_series(df, grid_points, latitude, longitude, height=10, display=False)
-
-    # Ensure the 'direction' column exists
-    if 'direction' not in WR_data.columns:
-        raise ValueError("The DataFrame must contain a 'direction' column.")
-    
-    if height != 10 and height != 100: 
-        if 'u10' not in WR_data.columns: 
-            raise ValueError("The DataFrame must contain a 'u10' column.")
-
-        u_ref = WR_data['u10']
-        z_ref = 10 
-        z_target = height
-        speed = extrapolate_wind_speed(u_ref, z_ref, z_target, alpha=0.1)
-        direction = WR_data['direction']
-    else: 
-        if 'speed' not in WR_data.columns: 
-            raise ValueError("The DataFrame must contain a 'u10' column.")
-        speed = WR_data['speed']
-        direction = WR_data['direction']
-
-    WRdf = pd.DataFrame({'speed': speed, 'direction': direction})
-
-    # Define the wind bin specifications
-    dir_bin_width = 360 / num_bins 
-    dir_bin_borders = np.arange(dir_bin_width/2, WRdf['direction'].max() + dir_bin_width, dir_bin_width)
-    dir_bin_centres = dir_bin_borders[:-1] + dir_bin_width/2
-    
-    WRdf['wind_bin'] = pd.cut(WRdf['direction'], bins=dir_bin_borders, labels=dir_bin_centres, include_lowest=True)
-
-    WindRoseData = WRdf.groupby('wind_bin').agg(
-    wsp = ('speed', 'count'),
-    count = ('direction', 'count')
-    ).reset_index()
-
-    return WindRoseData
-
-
-# def plot_wind_rose(wind_directions, wind_speeds, height="10m"):
-#     """
-#     Plot a wind rose diagram where the length of the bars represents wind speed.
-
-#     Parameters:
-#         wind_directions (array-like): Wind direction data in degrees (0-360).
-#         wind_speeds (array-like): Wind speed data in m/s.
-#         height (str): Height level for the title (e.g., "10m" or "100m").
-#     """
-#     from windrose import WindroseAxes
-#     import matplotlib.pyplot as plt
-
-#     # Create a wind rose plot
-#     fig = plt.figure(figsize=(8, 8))
-#     ax = WindroseAxes.from_ax(fig=fig)
-    
-#     # Plot the wind rose with wind speeds determining the bar lengths
-#     ax.bar(wind_directions, wind_speeds, normed=False, opening=0.8, edgecolor='white')
-
-#     # Add labels and title
-#     ax.set_title(f"Wind Rose Diagram at {height}", fontsize=14)
-#     ax.set_legend(title="Wind Speed [m/s]", loc="lower right", fontsize=10)
-#     plt.show()
-
-
+def plot_wind_rose(direction, speed, num_bins = 6): 
+    ax = WindroseAxes.from_ax()
+    ax.bar(direction,
+            speed, 
+            normed = True, 
+            nsector = 12, 
+            edgecolor = 'white', 
+            opening = 1.0,
+            bins = num_bins)
+    ax.set_legend()
