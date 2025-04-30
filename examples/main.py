@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd 
 import xarray as xr 
 import matplotlib.pyplot as plt 
-#from windrose import WindroseAxes
-#from matplotlib.pyplot import get_cmap
+from windrose import WindroseAxes
+from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 import WRA_Package as wra
 
@@ -114,11 +114,11 @@ print(f"Shape (k): {shape:.3f}")
 print(f"Scale (A): {scale:.3f}")
 
 # --- Plot histogram with Weibull PDF overlay ---
-fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
-plt.show()
+# fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
+# plt.show()
 
 
-wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
+# wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
 
 #7
 
@@ -147,9 +147,11 @@ if WindData_2005 is not None:
 
     # Extract wind speed at the reference height
     u_ref_2005 = WindSpdDir_2005['speed']
+    u_10_2005 = WindSpdDir_2005['u10']
+    u_100_2005 = WindSpdDir_2005['u100']
 
     # Extrapolate wind speed to the target height (90 meters)
-    extrapolated_speed_90m = wra.extrapolate_wind_speed(u_ref_2005, reference_height, target_height, alpha)
+    extrapolated_speed_90m = wra.extrapolate_wind_speed(u_ref_2005, u_10_2005, u_100_2005, reference_height, target_height)
 
     # Print the extrapolated wind speed
     # print(f"\nExtrapolated wind speed at {target_height} meters for point ({interpolation_lat}, {interpolation_long}):")
