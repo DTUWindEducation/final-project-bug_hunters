@@ -5,8 +5,8 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
-# from windrose import WindroseAxes
-# from matplotlib.pyplot import get_cmap
+from windrose import WindroseAxes
+from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 from scipy.interpolate import griddata
 from scipy.stats import weibull_min # Weibull distribution for wind speed
@@ -299,16 +299,16 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     return fig, ax
 
 
-# def plot_wind_rose(direction, speed, num_bins = 6): 
-#     ax = WindroseAxes.from_ax()
-#     ax.bar(direction,
-#             speed, 
-#             normed = True, 
-#             nsector = 12, 
-#             edgecolor = 'white', 
-#             opening = 1.0,
-#             bins = num_bins)
-#     ax.set_legend()
+def plot_wind_rose(direction, speed, num_bins = 6): 
+    ax = WindroseAxes.from_ax()
+    ax.bar(direction,
+            speed, 
+            normed = True, 
+            nsector = 12, 
+            edgecolor = 'white', 
+            opening = 1.0,
+            bins = num_bins)
+    ax.set_legend()
 
 
 def calculate_bin_probabilities(data, bins):
