@@ -59,6 +59,29 @@ def conc_data(files_list):
     ConcatDF = pd.concat(df_concat, axis=0, ignore_index=True)
     return ConcatDF
 
+def separate_data_by_year(WindData, year):
+    """
+    Separates the WindData DataFrame for a specific year.
+
+    Parameters:
+        WindData (pd.DataFrame): The input DataFrame containing wind data with a 'valid_time' column.
+        year (int): The year to filter the data for.
+
+    Returns:
+        pd.DataFrame: A DataFrame containing data only for the specified year.
+    """
+    # Ensure 'valid_time' is a datetime object
+    WindData['valid_time'] = pd.to_datetime(WindData['valid_time'])
+
+    # Filter the data for the specified year
+    filtered_data = WindData[WindData['valid_time'].dt.year == year]
+
+    # Check if data exists for the year
+    if filtered_data.empty:
+        raise ValueError(f"No data found for the year {year}.")
+
+    return filtered_data
+
 
 def plot_wind_time_series(df, lat, lon, level=10):
     fig, axs = plt.subplots(2,1,figsize=(12,6))
@@ -286,3 +309,46 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
 #             opening = 1.0,
 #             bins = num_bins)
 #     ax.set_legend()
+
+def calculate_bin_probabilities(data, bins):
+    """
+    Calculate the probabilities of data falling within specified bins.
+
+    Parameters:
+        data (pd.Series): The wind speed data.
+        bins (list): The edges of the bins (e.g., [0, 5, 10, 15, 20]).
+
+    Returns:
+        dict: A dictionary where keys are bin ranges and values are probabilities (percentages).
+    """
+    # Use pandas cut to categorize data into bins
+    bin_counts = pd.cut(data, bins=bins, right=False).value_counts(sort=False)
+
+    # Calculate total data points
+    total_count = len(data)
+
+    # Calculate probabilities (percentages) for each bin
+    bin_probabilities = {f"[{interval.left}, {interval.right})": (count / total_count) * 100
+                         for interval, count in bin_counts.items()}
+
+    return bin_probabilities
+
+def calculate_aep(bin_probabilities, power_per_bin):
+    """
+    Calculate the Annual Energy Production (AEP).
+
+    Parameters:
+        bin_probabilities (dict): A dictionary where keys are bin ranges and values are probabilities (percentages).
+        power_per_bin (dict): A dictionary where keys are bin ranges and values are power values (e.g., kW).
+
+    Returns:
+        float: The calculated AEP.
+    """
+    # Ensure the bin ranges in both dictionaries match
+    if set(bin_probabilities.keys()) != set(power_per_bin.keys()):
+        raise ValueError("Bin ranges in probabilities and power values do not match.")
+
+    # Calculate AEP using the formula
+    aep = 8760 * sum((bin_probabilities[bin_range] / 100) * power_per_bin[bin_range] for bin_range in bin_probabilities)
+
+    return aep
