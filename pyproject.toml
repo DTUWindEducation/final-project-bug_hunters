@@ -17,10 +17,10 @@ dependencies = [
     "matplotlib",
     "numpy",
     "scipy",
-    "tk"
-    "pandas"
-    "xarray" 
-    "windrose'
+    "tk",
+    "pandas",
+    "xarray", 
+    "windrose"
 
 ]
 
