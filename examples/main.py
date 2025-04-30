@@ -114,13 +114,10 @@ print(f"Shape (k): {shape:.3f}")
 print(f"Scale (A): {scale:.3f}")
 
 # --- Plot histogram with Weibull PDF overlay ---
-# fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
-# plt.show()
+fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
+plt.show()
 
-
-# wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
-
-#7
+wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
 
 # Call the function to separate data for the year 2005
 try:
