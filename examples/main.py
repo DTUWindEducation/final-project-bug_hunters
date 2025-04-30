@@ -116,4 +116,4 @@ fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, sc
 plt.show()
 
 # # --- Wind rose plot ---
-# wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
+wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
