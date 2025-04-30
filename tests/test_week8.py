@@ -1,9 +1,11 @@
 from pathlib import Path
 import numpy as np
 import xarray as xr
+import pandas as pd
 
 import matplotlib.pyplot as plt
 import WRA_Package as wra
+from WRA_Package import WindInterpolator
 
 FILE_PATH = Path(__file__)
 FILE_DIR = FILE_PATH.parent.parent
@@ -17,11 +19,10 @@ def test_load_wind_data():
 
     # When
 
-    wind_speed, wind_dir, time, lat, lon = wra.load_data(path_nc, level=100)
+    df = wra.load_data(path_nc)
 
     # Then
-    assert isinstance(wind_speed, xr.DataArray)     #"Output should be an xarray DataArray"
-    assert wind_speed.ndim == 3     #"Expected wind speed to have 3 dimensions (time, lat, lon)"  #array has 3 dimesnions: time, latitude, longitude
+    assert isinstance(df, pd.DataFrame)      
 
 
 def test_plot_wind_speed_histogram(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
@@ -29,7 +30,7 @@ def test_plot_wind_speed_histogram(monkeypatch):  # use a pytest "monkeypatch" t
     monkeypatch.setattr(plt, 'show', lambda: None)  # temporarily overwrite plt.show() to do nothing
     # given
     path_wind_data = DATA_DIR / "1997-1999.nc"
-    wind_speeds, wind_dir, time, lat, lon = wra.load_data(path_wind_data,100)
+    wind_speeds, wind_dir, time, lat, lon = wra.load_data(path_wind_data)
     # when
     fig, axs = wra.plot_wind_speed_histogram(wind_speeds, 100)
     # then
@@ -40,11 +41,101 @@ def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to st
     monkeypatch.setattr(plt, 'show', lambda: None)  # temporarily overwrite plt.show() to do nothing
     # given
     path_wind_data = DATA_DIR / "1997-1999.nc"
-    wind_speeds, wind_dir, time, lat, lon = wra.load_data(path_wind_data,100)
+    lat = 55.5 
+    lon = 7.75
+    height = 10
+    df = wra.load_data(path_wind_data)
+    df_2 = wra.compute_and_plot_time_series(df,lat,lon,height, display_figure=False)
     # when
-    fig, axs = wra.plot_wind_time_series(wind_speeds, time, 100)
+    fig, axs = wra.plot_wind_time_series(df_2, lat, lon, 100)
     # then
     assert isinstance(fig, plt.Figure)  # check it's a figure
+    assert axs.shape == (2,)
+    assert all(isinstance(ax, plt.Axes) for ax in axs)
+    assert len(fig.get_axes()) == 2          # and that there are 2 axes (since two subplots)
+
+
+def test_wind_interpolation():
+    """
+    Check the results of the wind interpolation method
+    """
+    # given 
+    path_wind_data = DATA_DIR / "1997-1999.nc"
+    lat = 55.5 
+    lon = 7.75
+    height = 10
+    df = wra.load_data(path_wind_data)
+    df_2 = wra.compute_and_plot_time_series(df,lat,lon,height, display_figure=False)
+    grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
+    time = df_2['time']
+
+    # when 
+    interp = WindInterpolator(grid_points, df)
+    u10, v10, u100, v100, out_times = interp.interpolate(55.6, 7.8)
+
+    # then
+    assert isinstance(u10, np.ndarray) and isinstance(v10, np.ndarray)
+    assert isinstance(u100, np.ndarray) and isinstance(v100, np.ndarray)
+    assert u10.shape == v10.shape == u100.shape == v100.shape == (len(time),)
+    assert np.array_equal(out_times, time.values)
+
+def test_compute_and_plot_timeseries_gridpoint(monkeypatch):
+    """ 
+    testing comupte and plot time series to ensure 
+    that it returns a df and fix, axs for a grid point
+
+    """
+    monkeypatch.setattr(plt, 'show', lambda: None)
+
+    # given 
+    path_wind_data = DATA_DIR / "1997-1999.nc"
+    lat = 55.5 
+    lon = 7.75
+    height = 10
+    df = wra.load_data(path_wind_data)
+  
+    # when 
+    df_2, fig, axs = wra.compute_and_plot_time_series(
+        df, lat, lon, height, display_figure=True
+    )
+
+    # then
+    assert isinstance(df_2, pd.DataFrame)
+    assert {"time", "speed", "direction", "u10", "v10","u100","v100"}.issubset(df_2.columns)
+    assert len(df_2['speed']) == (len(df['u10'])/4)     # dividing by 4 since there is data for 4 different locations
+    assert isinstance(fig, plt.Figure)
+    assert isinstance(axs, np.ndarray) and axs.shape == (2,)
+    assert all(isinstance(ax, plt.Axes) for ax in axs)
+    assert len(fig.get_axes()) == 2
+
+def test_compute_and_plot_timeseries_interpolation(monkeypatch):
+    """
+    testing comupte and plot time series to ensure 
+    that it returns a df and fix, axs for a point 
+    within the grid 
+
+    """
+    monkeypatch.setattr(plt, 'show', lambda: None)
+
+    # given 
+    path_wind_data = DATA_DIR / "1997-1999.nc"
+    lat = 55.63 
+    lon = 7.82
+    height = 10
+    df = wra.load_data(path_wind_data)
+  
+    # when 
+    df_2, fig, axs = wra.compute_and_plot_time_series(
+        df, lat, lon, height, display_figure=True
+    )
+
+    # then
+    assert {"time", "speed", "direction", "u10", "v10","u100","v100"}.issubset(df_2.columns)
+    assert len(df_2['speed']) == (len(df['u10'])/4)     # dividing by 4 since there is data for 4 different locations
+    assert isinstance(fig, plt.Figure)
+    assert isinstance(axs, np.ndarray) and axs.shape == (2,)
+    assert all(isinstance(ax, plt.Axes) for ax in axs)
+    assert len(fig.get_axes()) == 2
 
 def test_calculate_alpha_dynamic_known_values():
     u_10 = np.array([5.0])
@@ -99,3 +190,27 @@ def test_plot_wind_speed_with_weibull(monkeypatch):
 
     assert isinstance(fig, plt.Figure), "Expected a matplotlib Figure"
     assert hasattr(ax, "plot"), "Expected an Axes object"
+
+def test_plot_wind_rose():
+    """
+    testing the wind rose plotting function
+    """
+
+    # given 
+    path_wind_data = DATA_DIR / "1997-1999.nc"
+    lat = 55.5 
+    lon = 7.75
+    height = 10
+    df = wra.load_data(path_wind_data)
+    df_2 = wra.compute_and_plot_time_series(df,lat,lon,height, display_figure=False)
+    direction = df_2['direction']            # degrees
+    speed     = df_2['speed']            # m/s
+    num_bins  = 4
+
+    # for
+    wra.plot_wind_rose(direction, speed, num_bins=num_bins, label_interval=45)
+
+    ax = plt.gca()
+    assert isinstance(ax, wra.WindroseAxes)        
+
+ 
