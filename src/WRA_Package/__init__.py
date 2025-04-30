@@ -5,8 +5,8 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
-# from windrose import WindroseAxes
-# from matplotlib.pyplot import get_cmap
+from windrose import WindroseAxes
+from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 from scipy.interpolate import griddata
 from scipy.stats import weibull_min # Weibull distribution for wind speed
