@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
 from windrose import WindroseAxes
 from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
@@ -84,6 +83,8 @@ def separate_data_by_year(WindData, year):
 
 
 def plot_wind_time_series(df, lat, lon, level=10):
+    if ('speed' not in df.columns) or ('direction' not in df.columns) or ('time') not in df.columns: 
+        raise ValueError ("Dataframe must contain speed, direction, and time")
     fig, axs = plt.subplots(2,1,figsize=(12,6))
     axs[0].plot(df['time'],df['speed'])
     axs[0].set_title(f"Wind Speed Time Series at {level} m [{lat}° N,{lon}° E]")
