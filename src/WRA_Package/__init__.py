@@ -122,7 +122,7 @@ class WindInterpolator:
         for lat, lon in grid_points:
             point_data = self.dataframe.loc[
                 (self.dataframe['latitude'] == lat) & 
-                (self.dataframe['longitude'] == lon)git pu
+                (self.dataframe['longitude'] == lon)
             ].sort_values('valid_time')
             
             self.times = point_data['valid_time'].values
@@ -315,10 +315,10 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
             opening = 1.0,
             bins = num_bins,)
     ax.set_legend(loc=(-0.08, -0.08),title='Wind Speed [m/s]')
-    # angles = np.arange(0, 360, label_interval)          # 0°, 30°, 60° … 330°
-    # ax.set_thetagrids(angles, [f"{a}°" for a in angles])
-    ax.set_thetagrids(range(0,360,30),[90, 60, 30, 0, 330, 300, 270, 240, 210, 180, 150, 120])
-    ax.set_theta_zero_location('W', offset=-180)
+    angles = np.arange(0, 360, label_interval)          # 0°, 30°, 60° … 330°
+    #ax.set_thetagrids(angles, [f"{a}°" for a in angles])
+    # ax.set_thetagrids(range(0,360,30),[f"{a}°" for a in angles])
+    # ax.set_theta_zero_location('W', offset=-90)
 
 def calculate_bin_probabilities(data, bins):
     """
