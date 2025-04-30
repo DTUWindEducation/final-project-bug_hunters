@@ -166,7 +166,7 @@ bins = [
 bin_probabilities = wra.calculate_bin_probabilities(extrapolated_speed_90m, bins)
 
 #  Print the probabilities per bin
-# print("\nWind Speed Probabilities per Bin:")
+# print("\nWind Speed Probabilities per Bin:")git 
 # for bin_range, probability in bin_probabilities.items():
 #     print(f"{bin_range}: {probability:.2f}%")
 
