@@ -99,7 +99,7 @@ class WindInterpolator:
         for lat, lon in grid_points:
             point_data = self.dataframe.loc[
                 (self.dataframe['latitude'] == lat) & 
-                (self.dataframe['longitude'] == lon)
+                (self.dataframe['longitude'] == lon)git pu
             ].sort_values('valid_time')
             
             self.times = point_data['valid_time'].values
