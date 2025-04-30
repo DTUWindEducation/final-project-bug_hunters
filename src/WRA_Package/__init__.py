@@ -5,8 +5,8 @@ import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
-from windrose import WindroseAxes
-from matplotlib.pyplot import get_cmap
+# from windrose import WindroseAxes
+# from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 from scipy.interpolate import griddata
 from scipy.stats import weibull_min # Weibull distribution for wind speed
@@ -27,7 +27,7 @@ def load_data(file_path):
         lat: latitude values (float64)
         lon: longitude values (float64)
     """
-    data = xr.open_dataset(file_path)
+    data = xr.open_dataset(file_path, decode_timedelta=True)
     df = data.to_dataframe().reset_index()
 
     return df
@@ -231,19 +231,40 @@ def plot_wind_speed_histogram(time_series_data, level="100m"):
     return fig, axs
 
     
-def extrapolate_wind_speed(u_ref, z_ref, z_target, alpha=0.1):
+def calculate_alpha_dynamic(u_10, u_100):
     """
-    Extrapolate wind speed using the power law profile.
+    Calculate the wind shear exponent alpha dynamically.
+
+    Parameters:
+        u_10 (array-like): Wind speed at 10 m height [m/s]
+        u_100 (array-like): Wind speed at 100 m height [m/s]
+
+    Returns:
+        alpha (array-like): Wind shear exponent
+    """
+    u_10 = np.array(u_10)
+    u_100 = np.array(u_100)
+    with np.errstate(divide='ignore', invalid='ignore'):
+        alpha = np.log(u_100 / u_10) / np.log(100 / 10)
+        alpha = np.nan_to_num(alpha, nan=0.0, posinf=0.0, neginf=0.0)
+    return alpha
+
+
+def extrapolate_wind_speed(u_ref, u_10, u_100, z_ref, z_target):
+    """
+    Extrapolate wind speed using dynamically calculated alpha.
 
     Parameters:
         u_ref (array-like): Wind speed at reference height [m/s]
+        u_10 (array-like): Wind speed at 10 m [m/s]
+        u_100 (array-like): Wind speed at 100 m [m/s]
         z_ref (float): Reference height [m]
         z_target (float): Target height [m]
-        alpha (float): Power law exponent (default 0.1 for offshore)
 
     Returns:
         array-like: Wind speed at target height
     """
+    alpha = calculate_alpha_dynamic(u_10, u_100)
     return u_ref * (z_target / z_ref) ** alpha
 
 
@@ -278,17 +299,16 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     return fig, ax
 
 
-def plot_wind_rose(direction, speed, num_bins = 6): 
-    ax = WindroseAxes.from_ax()
-    ax.bar(direction,
-            speed, 
-            normed = True, 
-            nsector = 12, 
-            edgecolor = 'white', 
-            opening = 1.0,
-            bins = num_bins)
-    ax.set_legend()
-
+# def plot_wind_rose(direction, speed, num_bins = 6): 
+#     ax = WindroseAxes.from_ax()
+#     ax.bar(direction,
+#             speed, 
+#             normed = True, 
+#             nsector = 12, 
+#             edgecolor = 'white', 
+#             opening = 1.0,
+#             bins = num_bins)
+#     ax.set_legend()
 
 def calculate_bin_probabilities(data, bins):
     """

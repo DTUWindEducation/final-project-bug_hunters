@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd 
 import xarray as xr 
 import matplotlib.pyplot as plt 
-from windrose import WindroseAxes
-from matplotlib.pyplot import get_cmap
+# from windrose import WindroseAxes
+# from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 import WRA_Package as wra
 
@@ -51,8 +51,7 @@ for height in time_series_heights:
 reference_height = 10
 # specify target height 
 target_height = 97
-# specify alpha
-alpha = 0.1
+
 
 
 # Extract the appropriate wind speed time series
@@ -65,25 +64,47 @@ ExtrapolatedWindSpeed = pd.DataFrame({'Time': WindData['valid_time']})
 for lat, lon in locations[:-1]: 
     # call function to produce dataframe containing wind speed at each location
     WindSpdDir = wra.compute_and_plot_time_series(WindData,lat, lon, reference_height,display_figure=False)
-
+    # Also compute wind speeds at 10m and 100m (for dynamic alpha calculation)
+    WindSpdDir_10m = wra.compute_and_plot_time_series(WindData, lat, lon, 10, display_figure=False)
+    WindSpdDir_100m = wra.compute_and_plot_time_series(WindData, lat, lon, 100, display_figure=False)
+    
     # access dataframe and extract wind speed at location
     u_ref = WindSpdDir['speed']
+    u_10 = WindSpdDir_10m['speed']
+    u_100 = WindSpdDir_100m['speed']
 
-    # Extrapolate speed at new height using function and append to df
-    ExtrapolatedWindSpeed[f'({lat},{lon})'] = wra.extrapolate_wind_speed(u_ref, reference_height, target_height, alpha)
+    # Extrapolate using dynamic alpha
+    extrapolated_speed = wra.extrapolate_wind_speed(
+        u_ref=u_ref,
+        u_10=u_10,
+        u_100=u_100,
+        z_ref=reference_height,
+        z_target=target_height
+    )
 
-
+    # Add extrapolated speed to DataFrame
+    ExtrapolatedWindSpeed[f'({lat},{lon})'] = extrapolated_speed
 
 
 # use function to calculate wind spd and direction for location inside box at 10 m
 WindSpdDirWeibull = wra.compute_and_plot_time_series(WindData,locations[-1][0], locations[-1][1], reference_height,display_figure=False)
 
+WindSpdDirWeibull_10m = wra.compute_and_plot_time_series(WindData, locations[-1][0], locations[-1][1], 10, display_figure=False)
+WindSpdDirWeibull_100m = wra.compute_and_plot_time_series(WindData, locations[-1][0], locations[-1][1], 100, display_figure=False)
+
 # set reference speed to the wind speed data calculated for location inside box at 10 m
 u_ref_weibull = WindSpdDirWeibull['speed']
+u_10_weibull = WindSpdDirWeibull_10m['speed']
+u_100_weibull = WindSpdDirWeibull_100m['speed']
 
-# use function to extrapolate the wind speed to target height 
-extrapolated_speed_weibull = wra.extrapolate_wind_speed(u_ref_weibull, reference_height, target_height, alpha)
-
+# Extrapolate using dynamic alpha
+extrapolated_speed_weibull = wra.extrapolate_wind_speed(
+    u_ref=u_ref_weibull,
+    u_10=u_10_weibull,
+    u_100=u_100_weibull,
+    z_ref=reference_height,
+    z_target=target_height
+)
 
 # --- Fit Weibull distribution to extrapolated wind speed ---
 shape, scale = wra.fit_weibull_distribution(extrapolated_speed_weibull)
@@ -97,7 +118,7 @@ fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, sc
 plt.show()
 
 
-wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
+# wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
 
 #7
 
