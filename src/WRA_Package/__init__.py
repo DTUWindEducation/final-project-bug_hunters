@@ -78,15 +78,61 @@ def plot_wind_time_series(df, lat, lon, level=10):
     return fig, axs
 
 
+class WindInterpolator:
+    """
+    A class to interpolation wind data over a predefined grid.
 
-def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, display_figure = True):
-
-    grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
-    # Check if the point is exactly on a grid point
-    if (latitude, longitude) in grid_points:
-        winddata = dataFrame.loc[(dataFrame['latitude'] == latitude) & 
-                                 (dataFrame['longitude'] == longitude)]
+    Parameters:
+        grid_points (list of tuples): List of (latitude, longitude) tuples defining the grid.
+        dataframe (pd.DataFrame): DataFrame containing wind data for all grid points.
+    """
+    def __init__(self, grid_points, dataframe):
+        self.grid_points = np.array(grid_points)
+        self.dataframe = dataframe
         
+        self.u10 = []
+        self.v10 = []
+        self.u100 = []
+        self.v100 = []
+        self.times = None
+        
+        for lat, lon in grid_points:
+            point_data = self.dataframe.loc[
+                (self.dataframe['latitude'] == lat) & 
+                (self.dataframe['longitude'] == lon)
+            ].sort_values('valid_time')
+            
+            self.times = point_data['valid_time'].values
+            self.u10.append(point_data['u10'].values)
+            self.v10.append(point_data['v10'].values)
+            self.u100.append(point_data['u100'].values)
+            self.v100.append(point_data['v100'].values)
+    
+    def interpolate(self, interp_lat, interp_lon):
+        """
+        Interpolate wind components to a target location.
+        
+        Returns:
+            (u10_interp, v10_interp, u100_interp, v100_interp, times)
+        """
+        return ( griddata(self.grid_points, self.u10, (interp_lat, interp_lon), method='linear'),
+            griddata(self.grid_points, self.v10, (interp_lat, interp_lon), method='linear'),
+            griddata(self.grid_points, self.u100, (interp_lat, interp_lon), method='linear'),
+            griddata(self.grid_points, self.v100, (interp_lat, interp_lon), method='linear'),
+            self.times )
+    
+    
+
+def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, display_figure=True):
+    grid_points = [(55.5, 7.75), (55.5, 8.), (55.75, 7.75), (55.75, 8.)]
+    
+    if (latitude, longitude) in grid_points:
+
+        winddata = dataFrame.loc[
+            (dataFrame['latitude'] == latitude) & 
+            (dataFrame['longitude'] == longitude)
+        ]
+
         u_10 = winddata['u10']
         v_10 = winddata['v10']
 
@@ -103,7 +149,7 @@ def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, disp
             v = v_100
         else:
             raise ValueError("Invalid height entry. Enter either 10 or 100.")
-        dir_rad = np.arctan2(-u, -v)  # Note: Using arctan2 directly for correct quadrant
+        dir_rad = np.arctan2(-u, -v) 
         dir_deg = (dir_rad * 180 / np.pi) % 360
         dir_deg = dir_deg
         speed = np.sqrt(u**2 + v**2)
@@ -111,73 +157,33 @@ def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, disp
         time = time_values
 
     else:
-        # Interpolate for points within the grid
+        # Interpolate using WindInterpolator
         if not (55.5 <= latitude <= 55.75 and 7.75 <= longitude <= 8.0):
-            raise ValueError("Coordinates are outside the interpolation grid.")
+            raise ValueError("Coordinates are outside the interpolation grid. Reselect coordinates within the interpolation grid.")
         
-        # Prepare data for interpolation
-        points = []
-        u_values_10 = []
-        v_values_10 = []
-        u_values_100 = []
-        v_values_100 = []        
-        time_values = []
+        interpolator = WindInterpolator(grid_points, dataFrame)
+        u10_interp, v10_interp, u100_interp, v100_interp, time = interpolator.interpolate(latitude, longitude)
         
-        for lat, lon in grid_points:
-            point_data = dataFrame.loc[(dataFrame['latitude'] == lat) & 
-                                      (dataFrame['longitude'] == lon)]
-            points.append([lat, lon])
-            u_values_10.append(point_data['u10'].values)
-            v_values_10.append(point_data['v10'].values)
-
-            u_values_100.append(point_data['u100'].values)
-            v_values_100.append(point_data['v100'].values)
-
-            time_values.append(point_data['valid_time'].values)
+        # Assign interpolated values
+        u_10 = u10_interp
+        v_10 = v10_interp
+        u_100 = u100_interp
+        v_100 = v100_interp
         
-        # Convert to numpy arrays
-        points = np.array(points)
-        u_values_10 = np.array(u_values_10)
-        v_values_10 = np.array(v_values_10)
-
-        u_values_100 = np.array(u_values_100)
-        v_values_100 = np.array(v_values_100)
-
-        time_values = np.array(time_values)
-
-
-        # Perform interpolation using griddata
-        u_interp_10 = griddata(points, u_values_10, (latitude, longitude), method='linear')
-        v_interp_10 = griddata(points, v_values_10, (latitude, longitude), method='linear')
-
-        # Perform interpolation using griddata
-        u_interp_100 = griddata(points, u_values_100, (latitude, longitude), method='linear')
-        v_interp_100 = griddata(points, v_values_100, (latitude, longitude), method='linear')
-
-        
-        u_10 = u_interp_10
-        v_10 = v_interp_10
-
-        u_100 = u_interp_100
-        v_100 = v_interp_100
-
-        if height == 10: 
-            u = np.array([u_interp_10])
-            v = np.array([v_interp_10])
-        elif height == 100: 
-            u = np.array([u_interp_100])
-            v = np.array([v_interp_100])
-        else: 
+        if height == 10:
+            u = u10_interp
+            v = v10_interp
+        elif height == 100:
+            u = u100_interp
+            v = v100_interp
+        else:
             raise ValueError("Invalid height entry. Enter either 10 or 100.")
-
-    
-        # Calculate wind direction and speed
-        dir_rad = np.arctan2(-u, -v)  # Note: Using arctan2 directly for correct quadrant
+        
+        # Calculate wind spd and dir
+        dir_rad = np.arctan2(-u, -v)
         dir_deg = (dir_rad * 180 / np.pi) % 360
-        dir_deg = dir_deg[0]
         speed = np.sqrt(u**2 + v**2)
-        speed = speed[0]
-        time = time_values[0]
+        time = time
 
     df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg, 'u10': u_10, 'v10': v_10, 'u100': u_100, 'v100': v_100})
 
@@ -255,13 +261,17 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     return fig, ax
 
 
-def plot_wind_rose(direction, speed, num_bins = 6): 
-    ax = WindroseAxes.from_ax()
+def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30): 
+    ax = WindroseAxes.from_ax() 
     ax.bar(direction,
             speed, 
             normed = True, 
             nsector = 12, 
             edgecolor = 'white', 
             opening = 1.0,
-            bins = num_bins)
-    ax.set_legend()
+            bins = num_bins,)
+    ax.set_legend(loc=(-0.08, -0.08),title='Wind Speed [m/s]')
+    # angles = np.arange(0, 360, label_interval)          # 0°, 30°, 60° … 330°
+    # ax.set_thetagrids(angles, [f"{a}°" for a in angles])
+    ax.set_thetagrids(range(0,360,30),[90, 60, 30, 0, 330, 300, 270, 240, 210, 180, 150, 120])
+    ax.set_theta_zero_location('W', offset=-180)
