@@ -244,4 +244,53 @@ def test_plot_wind_rose():
     ax = plt.gca()
     assert isinstance(ax, wra.WindroseAxes)        
 
+def test_calculate_bin_probabilities():
+    # Sample wind speed data
+    data = pd.Series([3.5, 4.2, 5.1, 6.8, 7.3, 8.0, 9.5])
+
+    # Define bins
+    bins = [3, 4, 5, 6, 7, 8, 9, 10]
+
+    # Expected probabilities (calculated manually)
+    expected = {
+        "[3.0, 4.0)": 14.2857,
+        "[4.0, 5.0)": 14.2857,
+        "[5.0, 6.0)": 14.2857,
+        "[6.0, 7.0)": 14.2857,
+        "[7.0, 8.0)": 14.2857,
+        "[8.0, 9.0)": 14.2857,
+        "[9.0, 10.0)": 14.2857,
+    }
+
+    # Call the function
+    result = calculate_bin_probabilities(data, bins)
+
+    # Assert that the result matches the expected probabilities
+    for bin_range, probability in expected.items():
+        assert abs(result[bin_range] - probability) < 0.01
+
+def test_calculate_aep():
+    # Sample bin probabilities and power per bin
+    bin_probabilities = {
+        "[3.0, 4.0)": 10.0,
+        "[4.0, 5.0)": 20.0,
+        "[5.0, 6.0)": 30.0,
+        "[6.0, 7.0)": 40.0,
+    }
+    power_per_bin = {
+        "[3.0, 4.0)": 100.0,
+        "[4.0, 5.0)": 200.0,
+        "[5.0, 6.0)": 300.0,
+        "[6.0, 7.0)": 400.0,
+    }
+
+    # Expected AEP (calculated manually)
+    expected_aep = 8760 * (0.1 * 100 + 0.2 * 200 + 0.3 * 300 + 0.4 * 400)
+
+    # Call the function
+    result = calculate_aep(bin_probabilities, power_per_bin)
+
+    # Assert that the result matches the expected value
+    assert abs(result - expected_aep) < 1e-5
+
  

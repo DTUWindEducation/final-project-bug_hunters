@@ -7,6 +7,9 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 import WRA_Package as wra
 
+# List to store all figures for final display
+figures_to_show =[]
+
 FILE_PATH = Path(__file__)      # path to this file
 FILE_DIR = FILE_PATH.parent.parent     # path to main folder 
 DATA_DIR = FILE_DIR / 'inputs'
@@ -14,6 +17,11 @@ DATA_97_99 = DATA_DIR / '1997-1999.nc'
 DATA_00_02 = DATA_DIR / '2000-2002.nc'
 DATA_03_05 = DATA_DIR / '2003-2005.nc'
 DATA_06_08 = DATA_DIR / '2006-2008.nc'
+
+#Load results to output directory
+OUTPUT_DIR = FILE_DIR / 'outputs' / 'data_files_you_generate'
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)  # ensure the folder exists
+
 
 # define locations for each grid point as outlined by assignment
 locations = [(55.5, 7.75), (55.5, 8.00), (55.75, 7.75), (55.75, 8.00)]
@@ -39,7 +47,8 @@ time_series_heights = [10, 100]
 for height in time_series_heights: 
     for lat, lon in locations: 
         wra.compute_and_plot_time_series(WindData,lat,lon,height)
-
+        df, fig, axs = wra.compute_and_plot_time_series(WindData, lat, lon, height, display_figure=True)
+        figures_to_show.append(fig)
 
 # --- Extrapolate wind speed to a custom height ---
 # specify referance height
@@ -55,6 +64,7 @@ if reference_height not in [10, 100]:
 
 # create data frame to append wind speeds at target height for each grid corner
 ExtrapolatedWindSpeed = pd.DataFrame({'Time': WindData['valid_time']})
+
 
 for lat, lon in locations[:-1]: 
     # call function to produce dataframe containing wind speed at each location
@@ -80,6 +90,21 @@ for lat, lon in locations[:-1]:
     # Add extrapolated speed to DataFrame
     ExtrapolatedWindSpeed[f'({lat},{lon})'] = extrapolated_speed
 
+
+# Clean and format column names from coordinate tuples
+new_columns = ["Time"]
+for col in ExtrapolatedWindSpeed.columns[1:]:
+    try:
+        lat, lon = eval(col)  # safely convert "(55.5, 7.75)" to tuple
+        new_columns.append(f"lat{lat}_lon{lon}")
+    except:
+        new_columns.append(str(col))  # fallback if not tuple
+
+ExtrapolatedWindSpeed.columns = new_columns
+
+# Save CSV
+csv_path = OUTPUT_DIR / 'extrapolated_wind_speeds.csv'
+ExtrapolatedWindSpeed.to_csv(csv_path, index=False, sep=';', float_format='%.2f')
 
 # use function to calculate wind spd and direction for location inside box at 10 m
 WindSpdDirWeibull = wra.compute_and_plot_time_series(WindData,locations[-1][0], locations[-1][1], reference_height,display_figure=False)
@@ -110,9 +135,17 @@ print(f"Scale (A): {scale:.3f}")
 
 # --- Plot histogram with Weibull PDF overlay ---
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
-plt.show()
+figures_to_show.append(fig)
 
-wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins = 8)
+# Save figure in output file
+fig_path_weibull = OUTPUT_DIR / f'weibull_fit_{target_height}m.png'
+fig.savefig(fig_path_weibull)
+figures_to_show.append(fig)
+
+fig_rose = wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
+fig_rose_path = OUTPUT_DIR / 'wind_rose.png'
+fig_rose.savefig(fig_rose_path)
+figures_to_show.append(fig_rose)
 
 # Call the function to separate data for the year 2005
 try:
@@ -186,3 +219,5 @@ aep = wra.calculate_aep(bin_probabilities, power_per_bin)
 print(f"\nAnnual Energy Production (AEP) for NREL 5 MW for 2005: {aep:.2f} kWh")
 
 # %%
+# Show all collected figures at the end
+plt.show()
