@@ -263,7 +263,7 @@ def test_calculate_bin_probabilities():
     }
 
     # Call the function
-    result = calculate_bin_probabilities(data, bins)
+    result = wra.calculate_bin_probabilities(data, bins)
 
     # Assert that the result matches the expected probabilities
     for bin_range, probability in expected.items():
@@ -288,7 +288,7 @@ def test_calculate_aep():
     expected_aep = 8760 * (0.1 * 100 + 0.2 * 200 + 0.3 * 300 + 0.4 * 400)
 
     # Call the function
-    result = calculate_aep(bin_probabilities, power_per_bin)
+    result = wra.calculate_aep(bin_probabilities, power_per_bin)
 
     # Assert that the result matches the expected value
     assert abs(result - expected_aep) < 1e-5
