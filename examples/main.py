@@ -17,6 +17,7 @@ DATA_97_99 = DATA_DIR / '1997-1999.nc'
 DATA_00_02 = DATA_DIR / '2000-2002.nc'
 DATA_03_05 = DATA_DIR / '2003-2005.nc'
 DATA_06_08 = DATA_DIR / '2006-2008.nc'
+TURBINE_DATA = DATA_DIR / 'NREL_Reference_5MW_126.csv'
 
 #Load results to output directory
 OUTPUT_DIR = FILE_DIR / 'outputs' / 'data_files_you_generate'
@@ -215,6 +216,17 @@ aep = wra.calculate_aep(bin_probabilities, power_per_bin)
 
 # Print the calculated AEP
 print(f"\nAnnual Energy Production (AEP) for NREL 5 MW for 2005: {aep:.2f} kWh")
+
+
+# Dominant wind direction
+lat, lon = locations[0]
+df, _, _ = wra.compute_and_plot_time_series(WindData, lat, lon, 10)
+dominant_dir, freq = wra.dominant_wind_direction(df['direction'])
+print(f"Dominant wind direction range: {dominant_dir} with {freq} occurrences.")
+
+
+
+
 
 # Show all collected figures at the end
 plt.show()

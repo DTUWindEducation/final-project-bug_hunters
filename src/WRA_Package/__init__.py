@@ -290,7 +290,8 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
 
 
 def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30): 
-    ax = WindroseAxes.from_ax() 
+    fig = plt.figure()
+    ax = WindroseAxes.from_ax(fig=fig) 
     ax.bar(direction,
             speed, 
             normed = True, 
@@ -298,12 +299,14 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
             edgecolor = 'white', 
             opening = 1.0,
             bins = num_bins,)
+
     ax.set_legend(loc=(-0.011, -0.09),title='Wind Speed [m/s]')
     ax.set_title('Wind Rose')
     fig = ax.figure 
     output_dir = Path(__file__).parent.parent.parent / "outputs" / "data_files_you_generate"
     figurename = f"wind_rose.png"
     fig.savefig( output_dir / figurename, format="png", bbox_inches='tight')
+
 
 def calculate_bin_probabilities(data, bins):
     """
@@ -347,3 +350,35 @@ def calculate_aep(bin_probabilities, power_per_bin):
     aep = 8760 * sum((bin_probabilities[bin_range] / 100) * power_per_bin[bin_range] for bin_range in bin_probabilities)
 
     return aep
+
+
+
+
+def dominant_wind_direction(direction_series, bin_size=30):
+    """
+    Identifies the dominant wind direction range.
+
+    Parameters:
+        direction_series (pd.Series): Wind direction data in degrees [0, 360).
+        bin_size (int): Size of each directional bin (default is 30°).
+
+    Returns:
+        dominant_range (str): The most frequent wind direction bin as a string.
+        count (int): Number of occurrences in the dominant bin.
+    """
+    # Ensure valid range
+    directions = direction_series % 360
+
+    # Create bins and labels
+    bins = np.arange(0, 361, bin_size)
+    labels = [f"{int(bins[i])}°–{int(bins[i+1])}°" for i in range(len(bins)-1)]
+
+    # Bin the data
+    binned = pd.cut(directions, bins=bins, labels=labels, right=False, include_lowest=True)
+
+    # Find the most frequent bin
+    dominant_range = binned.value_counts().idxmax()
+    count = binned.value_counts().max()
+
+    return str(dominant_range), count
+
