@@ -98,7 +98,10 @@ def plot_wind_time_series(df, lat, lon, level=10):
     axs[1].set_ylabel('Wind Direction [deg]')
     axs[1].grid(True)
     fig.tight_layout()
-    plt.show()
+    output_dir = Path(__file__).parent.parent.parent / "outputs" / "data_files_you_generate"
+    figurename = f"time_series_{lat}_{lon}_{level}.png"
+    fig.savefig( output_dir / figurename, format="png", bbox_inches='tight')
+    #plt.show()
     return fig, axs
 
 
@@ -211,13 +214,12 @@ def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, disp
 
     df = pd.DataFrame({'time': time, 'speed': speed, 'direction': dir_deg, 'u10': u_10, 'v10': v_10, 'u100': u_100, 'v100': v_100})
 
-    if display_figure == True: 
+    if display_figure == True:
         fig, axs = plot_wind_time_series(df,latitude, longitude, height)
         return df, fig, axs
     else: 
         return df 
     
-
     
 def calculate_alpha_dynamic(u_10, u_100):
     """
@@ -296,11 +298,12 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
             edgecolor = 'white', 
             opening = 1.0,
             bins = num_bins,)
-    ax.set_legend(loc=(-0.08, -0.08),title='Wind Speed [m/s]')
-    angles = np.arange(0, 360, label_interval)          # 0°, 30°, 60° … 330°
-    #ax.set_thetagrids(angles, [f"{a}°" for a in angles])
-    # ax.set_thetagrids(range(0,360,30),[f"{a}°" for a in angles])
-    # ax.set_theta_zero_location('W', offset=-90)
+    ax.set_legend(loc=(-0.011, -0.09),title='Wind Speed [m/s]')
+    ax.set_title('Wind Rose')
+    fig = ax.figure 
+    output_dir = Path(__file__).parent.parent.parent / "outputs" / "data_files_you_generate"
+    figurename = f"wind_rose.png"
+    fig.savefig( output_dir / figurename, format="png", bbox_inches='tight')
 
 def calculate_bin_probabilities(data, bins):
     """
