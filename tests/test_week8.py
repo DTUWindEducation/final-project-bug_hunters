@@ -23,8 +23,24 @@ def test_load_wind_data():
     df = wra.load_data(path_nc)
 
     # Then
-    assert isinstance(df, pd.DataFrame)      
+    assert isinstance(df, pd.DataFrame)   
 
+def test_conc_data(): 
+    # given 
+    FILE_PATH = Path(__file__)      # path to this file
+    FILE_DIR = FILE_PATH.parent.parent     # path to main folder 
+    DATA_DIR = FILE_DIR / 'inputs'
+    DATA_97_99 = DATA_DIR / '1997-1999.nc'
+    DATA_00_02 = DATA_DIR / '2000-2002.nc'
+    DATA_03_05 = DATA_DIR / '2003-2005.nc'
+    DATA_06_08 = DATA_DIR / '2006-2008.nc'
+    data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08]  
+
+    # when 
+    df = wra.conc_data(data_list)
+
+    # then 
+    assert isinstance(df, pd.DataFrame)
 
 
 def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
