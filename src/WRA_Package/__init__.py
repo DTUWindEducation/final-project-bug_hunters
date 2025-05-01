@@ -26,9 +26,11 @@ def load_data(file_path):
         lat: latitude values (float64)
         lon: longitude values (float64)
     """
-    data = xr.open_dataset(file_path, decode_timedelta=True)
-    df = data.to_dataframe().reset_index()
-
+    if file_path.suffix.lower() == '.nc': 
+        data = xr.open_dataset(file_path, decode_timedelta=True)
+        df = data.to_dataframe().reset_index()
+    elif file_path.suffix.lower() == '.csv': 
+        df = pd.read_csv(file_path, sep=",")
     return df
 
 
@@ -307,6 +309,20 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
     figurename = f"wind_rose.png"
     fig.savefig( output_dir / figurename, format="png", bbox_inches='tight')
 
+
+def plot_power_curve(file_path): 
+    df = load_data(file_path)
+    fig, axs = plt.subplots(figsize=(6,6))
+    axs.plot(df['Wind Speed [m/s]'],df['Power [kW]'])
+    axs.set_title("Power Curve")
+    axs.set_xlabel('Wind Speed [m/s]')
+    axs.set_ylabel('Power [kW]')
+    axs.grid(True)
+    fig.tight_layout()
+    output_dir = Path(__file__).parent.parent.parent / "outputs" / "data_files_you_generate"
+    figurename = f"power_curve.png"
+    fig.savefig( output_dir / figurename, format="png", bbox_inches='tight')
+    return 
 
 def calculate_bin_probabilities(data, bins):
     """

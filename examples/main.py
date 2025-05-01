@@ -1,4 +1,3 @@
-
 from pathlib import Path
 import numpy as np 
 import pandas as pd 
@@ -142,9 +141,11 @@ fig_path_weibull = OUTPUT_DIR / f'weibull_fit_{target_height}m.png'
 fig.savefig(fig_path_weibull)
 figures_to_show.append(fig)
 
-
+# create wind rose figure 
 wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
 
+# call function to plot power curve 
+wra.plot_power_curve(TURBINE_DATA)
 
 # Call the function to separate data for the year 2005
 try:
@@ -223,10 +224,6 @@ lat, lon = locations[0]
 df, _, _ = wra.compute_and_plot_time_series(WindData, lat, lon, 10)
 dominant_dir, freq = wra.dominant_wind_direction(df['direction'])
 print(f"Dominant wind direction range: {dominant_dir} with {freq} occurrences.")
-
-
-
-
 
 # Show all collected figures at the end
 plt.show()
