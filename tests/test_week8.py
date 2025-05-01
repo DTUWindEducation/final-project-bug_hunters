@@ -13,7 +13,7 @@ FILE_DIR = FILE_PATH.parent.parent
 DATA_DIR= FILE_DIR / 'inputs'
 
 
-def test_load_wind_data():
+def test_load_wind_data_nc():
     """Test loading wind data from NetCDF file."""
     # Given
     path_nc = DATA_DIR / "1997-1999.nc"  # path to NetCDF file
@@ -24,6 +24,19 @@ def test_load_wind_data():
 
     # Then
     assert isinstance(df, pd.DataFrame)   
+
+def test_load_wind_data_csv():
+    """Test loading wind data from NetCDF file."""
+    # Given
+    path_csv = DATA_DIR / "NREL_Reference_15MW_240.csv"  # path to NetCDF file
+
+    # When
+
+    df = wra.load_data(path_csv)
+
+    # Then
+    assert isinstance(df, pd.DataFrame)   
+
 
 def test_conc_data(): 
     # given 
