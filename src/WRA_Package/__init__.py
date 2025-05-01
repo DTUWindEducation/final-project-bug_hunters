@@ -218,25 +218,6 @@ def compute_and_plot_time_series(dataFrame, latitude, longitude, height=10, disp
         return df 
     
 
-
-
-def plot_wind_speed_histogram(time_series_data, level="100m"):
-    """
-    Plot histogram of wind speed.
-
-    Parameters:
-        wind_speed (xr.DataArray): Computed wind speed.
-        level (str): Height level (for title).
-    """
-    fig, axs = plt.subplots(figsize=(12,6))
-    axs.hist(time_series_data, bins=50)
-    axs.set_title(f"Wind Speed Histogram at {level}")
-    axs.set_xlabel("Wind Speed [m/s]")
-    axs.set_ylabel("Frequency")
-    axs.grid(True)
-    fig.tight_layout()
-    return fig, axs
-
     
 def calculate_alpha_dynamic(u_10, u_100):
     """

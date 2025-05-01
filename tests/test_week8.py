@@ -2,7 +2,8 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 import pandas as pd
-
+import matplotlib 
+matplotlib.use("Agg")       # included to resolve tk issue (recommended to include at advice of teaching staff)
 import matplotlib.pyplot as plt
 import WRA_Package as wra
 from WRA_Package import WindInterpolator
@@ -22,19 +23,25 @@ def test_load_wind_data():
     df = wra.load_data(path_nc)
 
     # Then
-    assert isinstance(df, pd.DataFrame)      
+    assert isinstance(df, pd.DataFrame)   
 
+def test_conc_data(): 
+    # given 
+    FILE_PATH = Path(__file__)      # path to this file
+    FILE_DIR = FILE_PATH.parent.parent     # path to main folder 
+    DATA_DIR = FILE_DIR / 'inputs'
+    DATA_97_99 = DATA_DIR / '1997-1999.nc'
+    DATA_00_02 = DATA_DIR / '2000-2002.nc'
+    DATA_03_05 = DATA_DIR / '2003-2005.nc'
+    DATA_06_08 = DATA_DIR / '2006-2008.nc'
+    data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08]  
 
-def test_plot_wind_speed_histogram(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
-    """Check some aspects of plot_resp"""
-    monkeypatch.setattr(plt, 'show', lambda: None)  # temporarily overwrite plt.show() to do nothing
-    # given
-    path_wind_data = DATA_DIR / "1997-1999.nc"
-    wind_speeds, wind_dir, time, lat, lon = wra.load_data(path_wind_data)
-    # when
-    fig, axs = wra.plot_wind_speed_histogram(wind_speeds, 100)
-    # then
-    assert isinstance(fig, plt.Figure)  # check it's a figure
+    # when 
+    df = wra.conc_data(data_list)
+
+    # then 
+    assert isinstance(df, pd.DataFrame)
+
 
 def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
     """Check some aspects of plot_resp"""
@@ -58,6 +65,7 @@ def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to st
 def test_wind_interpolation():
     """
     Check the results of the wind interpolation method
+
     """
     # given 
     path_wind_data = DATA_DIR / "1997-1999.nc"
@@ -74,8 +82,10 @@ def test_wind_interpolation():
     u10, v10, u100, v100, out_times = interp.interpolate(55.6, 7.8)
 
     # then
-    assert isinstance(u10, np.ndarray) and isinstance(v10, np.ndarray)
-    assert isinstance(u100, np.ndarray) and isinstance(v100, np.ndarray)
+    assert isinstance(u10, np.ndarray)
+    assert isinstance(v10, np.ndarray)
+    assert isinstance(u100, np.ndarray) 
+    assert isinstance(v100, np.ndarray)
     assert u10.shape == v10.shape == u100.shape == v100.shape == (len(time),)
     assert np.array_equal(out_times, time.values)
 
@@ -253,7 +263,7 @@ def test_calculate_bin_probabilities():
     }
 
     # Call the function
-    result = calculate_bin_probabilities(data, bins)
+    result = wra.calculate_bin_probabilities(data, bins)
 
     # Assert that the result matches the expected probabilities
     for bin_range, probability in expected.items():
@@ -278,7 +288,7 @@ def test_calculate_aep():
     expected_aep = 8760 * (0.1 * 100 + 0.2 * 200 + 0.3 * 300 + 0.4 * 400)
 
     # Call the function
-    result = calculate_aep(bin_probabilities, power_per_bin)
+    result = wra.calculate_aep(bin_probabilities, power_per_bin)
 
     # Assert that the result matches the expected value
     assert abs(result - expected_aep) < 1e-5
