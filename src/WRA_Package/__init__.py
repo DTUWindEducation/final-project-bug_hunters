@@ -26,7 +26,9 @@ def load_data(file_path):
         lat: latitude values (float64)
         lon: longitude values (float64)
     """
+    # import netCDF data using xarray
     data = xr.open_dataset(file_path, decode_timedelta=True)
+    # convert data to type dataframe 
     df = data.to_dataframe().reset_index()
 
     return df
@@ -47,14 +49,18 @@ def conc_data(files_list):
     pd.DataFrame
         A single DataFrame with all the rows from each file.
     """
+    # intialize list to store data 
     df_concat = []
+
+    # for loop loading and storing each year of 
+    # data to prepare for concatenation
     for file in files_list:
-        # assume load_data returns a DataFrame with exactly these columns:
-        # ["valid_time","latitude","longitude","u10","v10","u100","v100"]
-        df = load_data(file)  
+        # load each data file 
+        df = load_data(file) 
+        # append to data list  
         df_concat.append(df)
 
-    # one-shot concatenation
+    # concatenation for multiple years of data into a dataframe 
     ConcatDF = pd.concat(df_concat, axis=0, ignore_index=True)
     return ConcatDF
 
@@ -83,8 +89,11 @@ def separate_data_by_year(WindData, year):
 
 
 def plot_wind_time_series(df, lat, lon, level=10):
+    # ensure that the necessary data (columns) are present in the dataframe, otherwise raise a ValueError
     if ('speed' not in df.columns) or ('direction' not in df.columns) or ('time') not in df.columns: 
         raise ValueError ("Dataframe must contain speed, direction, and time")
+    
+    # plot wind time series 
     fig, axs = plt.subplots(2,1,figsize=(12,6))
     axs[0].plot(df['time'],df['speed'])
     axs[0].set_title(f"Wind Speed Time Series at {level} m [{lat}° N,{lon}° E]")
@@ -92,6 +101,7 @@ def plot_wind_time_series(df, lat, lon, level=10):
     axs[0].set_ylabel('Wind Speed [m/s]')
     axs[0].grid(True)
 
+    # plot direction time series 
     axs[1].plot(df['time'],df['direction'])
     axs[1].set_title(f"Wind Direction Time Series at {level} m [{lat}° N,{lon}° E]")
     axs[1].set_xlabel('Time')
@@ -316,7 +326,7 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
             opening = 1.0,
             bins = num_bins,)
     ax.set_legend(loc=(-0.08, -0.08),title='Wind Speed [m/s]')
-    angles = np.arange(0, 360, label_interval)          # 0°, 30°, 60° … 330°
+    angles = np.arange(0, 360, label_interval)         
     #ax.set_thetagrids(angles, [f"{a}°" for a in angles])
     # ax.set_thetagrids(range(0,360,30),[f"{a}°" for a in angles])
     # ax.set_theta_zero_location('W', offset=-90)
