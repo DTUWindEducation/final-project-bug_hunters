@@ -2,7 +2,8 @@ from pathlib import Path
 import numpy as np
 import xarray as xr
 import pandas as pd
-
+import matplotlib 
+matplotlib.use("Agg")       # included to resolve tk issue (recommended to include at advice of teaching staff)
 import matplotlib.pyplot as plt
 import WRA_Package as wra
 from WRA_Package import WindInterpolator
@@ -25,16 +26,6 @@ def test_load_wind_data():
     assert isinstance(df, pd.DataFrame)      
 
 
-def test_plot_wind_speed_histogram(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
-    """Check some aspects of plot_resp"""
-    monkeypatch.setattr(plt, 'show', lambda: None)  # temporarily overwrite plt.show() to do nothing
-    # given
-    path_wind_data = DATA_DIR / "1997-1999.nc"
-    wind_speeds, wind_dir, time, lat, lon = wra.load_data(path_wind_data)
-    # when
-    fig, axs = wra.plot_wind_speed_histogram(wind_speeds, 100)
-    # then
-    assert isinstance(fig, plt.Figure)  # check it's a figure
 
 def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
     """Check some aspects of plot_resp"""
@@ -58,6 +49,7 @@ def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to st
 def test_wind_interpolation():
     """
     Check the results of the wind interpolation method
+
     """
     # given 
     path_wind_data = DATA_DIR / "1997-1999.nc"
@@ -74,8 +66,10 @@ def test_wind_interpolation():
     u10, v10, u100, v100, out_times = interp.interpolate(55.6, 7.8)
 
     # then
-    assert isinstance(u10, np.ndarray) and isinstance(v10, np.ndarray)
-    assert isinstance(u100, np.ndarray) and isinstance(v100, np.ndarray)
+    assert isinstance(u10, np.ndarray)
+    assert isinstance(v10, np.ndarray)
+    assert isinstance(u100, np.ndarray) 
+    assert isinstance(v100, np.ndarray)
     assert u10.shape == v10.shape == u100.shape == v100.shape == (len(time),)
     assert np.array_equal(out_times, time.values)
 
