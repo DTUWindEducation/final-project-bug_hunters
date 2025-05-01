@@ -1,4 +1,4 @@
-#%%
+
 from pathlib import Path
 import numpy as np 
 import pandas as pd 
@@ -47,8 +47,7 @@ time_series_heights = [10, 100]
 for height in time_series_heights: 
     for lat, lon in locations: 
         wra.compute_and_plot_time_series(WindData,lat,lon,height)
-        df, fig, axs = wra.compute_and_plot_time_series(WindData, lat, lon, height, display_figure=True)
-        figures_to_show.append(fig)
+
 
 # --- Extrapolate wind speed to a custom height ---
 # specify referance height
@@ -142,10 +141,9 @@ fig_path_weibull = OUTPUT_DIR / f'weibull_fit_{target_height}m.png'
 fig.savefig(fig_path_weibull)
 figures_to_show.append(fig)
 
-fig_rose = wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
-fig_rose_path = OUTPUT_DIR / 'wind_rose.png'
-fig_rose.savefig(fig_rose_path)
-figures_to_show.append(fig_rose)
+
+wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
+
 
 # Call the function to separate data for the year 2005
 try:
@@ -218,6 +216,5 @@ aep = wra.calculate_aep(bin_probabilities, power_per_bin)
 # Print the calculated AEP
 print(f"\nAnnual Energy Production (AEP) for NREL 5 MW for 2005: {aep:.2f} kWh")
 
-# %%
 # Show all collected figures at the end
 plt.show()
