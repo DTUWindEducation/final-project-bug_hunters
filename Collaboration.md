@@ -19,10 +19,11 @@ WhatsApp and MicrosoftTeams
 # Team member project responsabilities:
 Each team member will be responsable for specific tasks within the project. 
 Task delegation:
-Kali: Task 1,2,3, Architecture diagram
-Tessa: Task 4,5,6, Collaboration.md, README file
-Benni: Task 7,8, pylint score checking
-Furthermore, each team member will write tests for the functions they are working on to make sure everything works as expected throughout the project. Everyone is also responsible for clearly commenting their code and adding helpful docstrings. To keep the project on track and running smoothly, we will regularly review each other’s work and give feedback.
+Kali: Task 1,2,3, pylint score checking, README file,
+Tessa: Task 4,5,6, 7 Collaboration.md, Architecture diagram
+Benni: Task 7,8, Collaboration.md, Docstrings, Comments
+
+Furthermore, each team member will write tests for the functions they are working on to make sure everything works as expected throughout the project. To keep the project on track and running smoothly, we will regularly review each other’s work and give feedback.
 
 # Team member rubric responsabilities:
 Each team member will be responsable for ensuring that their section of the requirements rubric have been satisfied.
