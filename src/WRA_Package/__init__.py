@@ -26,9 +26,11 @@ def load_data(file_path):
         lat: latitude values (float64)
         lon: longitude values (float64)
     """
-    data = xr.open_dataset(file_path, decode_timedelta=True)
-    df = data.to_dataframe().reset_index()
-
+    if file_path.suffix.lower() == '.nc': 
+        data = xr.open_dataset(file_path, decode_timedelta=True)
+        df = data.to_dataframe().reset_index()
+    elif file_path.suffix.lower() == '.csv': 
+        df = pd.read_csv(file_path)
     return df
 
 
