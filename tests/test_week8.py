@@ -147,6 +147,15 @@ def test_calculate_alpha_dynamic_known_values():
 
     assert np.allclose(alpha, expected_alpha), f"Expected {expected_alpha}, got {alpha}"
 
+def test_calculate_alpha_dynamic_zero_division():
+    u_10 = np.array([0.0, 5.0])
+    u_100 = np.array([5.0, 10.0])
+
+    alpha = wra.calculate_alpha_dynamic(u_10, u_100)
+
+    assert np.isfinite(alpha).all(), "Alpha should not contain NaNs or Infs"
+    assert (alpha >= 0).all(), "Alpha should be >= 0"
+
 def test_extrapolate_wind_speed_known_values():
     """
     Test extrapolated wind speed with known dynamic alpha.
@@ -163,6 +172,18 @@ def test_extrapolate_wind_speed_known_values():
     result = wra.extrapolate_wind_speed(u_ref, u_10, u_100, z_ref, z_target)
 
     assert np.allclose(result, expected_speed), f"Expected {expected_speed}, got {result}"
+
+def test_extrapolate_wind_speed_array_input():
+    u_ref = np.array([5.0, 6.0, 7.0])
+    u_10 = np.array([5.0, 6.0, 7.0])
+    u_100 = np.array([10.0, 11.0, 12.0])
+    z_ref = 10
+    z_target = 100
+
+    result = wra.extrapolate_wind_speed(u_ref, u_10, u_100, z_ref, z_target)
+    
+    assert result.shape == u_ref.shape, "Output shape mismatch"
+    assert (result > 0).all(), "Extrapolated speeds should be positive"
 
 def test_fit_weibull_distribution():
     """
