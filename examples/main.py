@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd 
 import xarray as xr 
 import matplotlib.pyplot as plt 
-# from windrose import WindroseAxes
-# from matplotlib.pyplot import get_cmap
 from matplotlib.patches import Patch
 import WRA_Package as wra
 
@@ -33,9 +31,6 @@ data_list = [DATA_97_99,DATA_00_02, DATA_03_05, DATA_06_08]
 
 # concatenate data to create a dataframe containting data for entire time-span  
 WindData = wra.conc_data(data_list)
-# print("WindData Preview:") # TODO - remove this line when finished
-# print(WindData.head()) # TODO - remove this line when finished
-
 
 # specifying which heights data should be plotted for in the time series 
 time_series_heights = [10, 100]
