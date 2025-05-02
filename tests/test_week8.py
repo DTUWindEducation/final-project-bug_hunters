@@ -7,6 +7,9 @@ matplotlib.use("Agg")       # included to resolve tk issue (recommended to inclu
 import matplotlib.pyplot as plt
 import WRA_Package as wra
 from WRA_Package import WindInterpolator
+from WRA_Package import separate_data_by_year
+from WRA_Package import generate_power_per_bin
+import pytest
 
 FILE_PATH = Path(__file__)
 FILE_DIR = FILE_PATH.parent.parent
@@ -54,6 +57,31 @@ def test_conc_data():
 
     # then 
     assert isinstance(df, pd.DataFrame)
+
+def test_separate_data_by_year():
+    # Sample wind data
+    data = {
+        "valid_time": [
+            "2005-01-01 00:00:00", "2005-02-01 00:00:00", 
+            "2006-01-01 00:00:00", "2006-02-01 00:00:00"
+        ],
+        "wind_speed": [5.0, 6.0, 7.0, 8.0]
+    }
+    wind_data = pd.DataFrame(data)
+
+    # Test case 1: Filter data for 2005
+    filtered_data = separate_data_by_year(wind_data, 2005)
+    assert len(filtered_data) == 2, "Expected 2 rows for the year 2005"
+    assert all(filtered_data['valid_time'].dt.year == 2005), "Filtered data contains incorrect years"
+
+    # Test case 2: Filter data for 2006
+    filtered_data = separate_data_by_year(wind_data, 2006)
+    assert len(filtered_data) == 2, "Expected 2 rows for the year 2006"
+    assert all(filtered_data['valid_time'].dt.year == 2006), "Filtered data contains incorrect years"
+
+    # Test case 3: No data for the year 2007
+    with pytest.raises(ValueError, match="No data found for the year 2007."):
+        separate_data_by_year(wind_data, 2007)
 
 
 def test_plot_wind_time_series(monkeypatch):  # use a pytest "monkeypatch" to stop plots from popping up
@@ -266,13 +294,13 @@ def test_calculate_bin_probabilities():
 
     # Expected probabilities (calculated manually)
     expected = {
-        "[3.0, 4.0)": 14.2857,
-        "[4.0, 5.0)": 14.2857,
-        "[5.0, 6.0)": 14.2857,
-        "[6.0, 7.0)": 14.2857,
-        "[7.0, 8.0)": 14.2857,
-        "[8.0, 9.0)": 14.2857,
-        "[9.0, 10.0)": 14.2857,
+        "[3, 4)": 14.2857,
+        "[4, 5)": 14.2857,
+        "[5, 6)": 14.2857,
+        "[6, 7)": 14.2857,
+        "[7, 8)": 14.2857,
+        "[8, 9)": 14.2857,
+        "[9, 10)": 14.2857,
     }
 
     # Call the function
@@ -306,4 +334,25 @@ def test_calculate_aep():
     # Assert that the result matches the expected value
     assert abs(result - expected_aep) < 1e-5
 
+def test_generate_power_per_bin():
+    # Sample NREL data
+    data = {
+        "Wind Speed [m/s]": [3, 4, 5, 6, 7],
+        "Power [kW]": [40.52, 177.67, 403.9, 737.59, 1187.18]
+    }
+    nrel_data = pd.DataFrame(data)
+
+    # Expected output
+    expected_power_per_bin = {
+        "[3.0, 4.0)": 40.52,
+        "[4.0, 5.0)": 177.67,
+        "[5.0, 6.0)": 403.9,
+        "[6.0, 7.0)": 737.59
+    }
+
+    # Call the function
+    result = generate_power_per_bin(nrel_data)
+
+    # Assert the result matches the expected output
+    assert result == expected_power_per_bin, f"Expected {expected_power_per_bin}, but got {result}"
  
