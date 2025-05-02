@@ -367,9 +367,6 @@ def calculate_aep(bin_probabilities, power_per_bin):
 
     return aep
 
-
-
-
 def dominant_wind_direction(direction_series, bin_size=30):
     """
     Identifies the dominant wind direction range.
@@ -397,4 +394,25 @@ def dominant_wind_direction(direction_series, bin_size=30):
     count = binned.value_counts().max()
 
     return str(dominant_range), count
+
+def generate_power_per_bin(nrel_data):
+    """
+    Generate the power per bin dictionary dynamically from the NREL data.
+
+    Parameters:
+        nrel_data (pd.DataFrame): DataFrame containing wind speed and power data.
+
+    Returns:
+        dict: A dictionary where keys are bin ranges and values are power values (kW).
+    """
+    power_per_bin = {}
+    wind_speeds = nrel_data['Wind Speed [m/s]'].tolist()
+    powers = nrel_data['Power [kW]'].tolist()
+
+    # Create bin ranges and map them to power values
+    for i in range(len(wind_speeds) - 1):
+        bin_range = f"[{wind_speeds[i]:.1f}, {wind_speeds[i+1]:.1f})"
+        power_per_bin[bin_range] = powers[i]
+
+    return power_per_bin
 
