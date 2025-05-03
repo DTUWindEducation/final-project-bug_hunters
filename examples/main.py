@@ -28,8 +28,8 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)  # ensure the folder exists
 locations = [(55.5, 7.75), (55.5, 8.00), (55.75, 7.75), (55.75, 8.00)]
 
 # specifying a location within the grid to interpolate for
-interpolation_lat = 55.68
-interpolation_long = 7.82
+interpolation_lat =55.68
+interpolation_long =7.82
 interp_coords = (interpolation_lat, interpolation_long)
 
 # adding interpolation coordinates to the locations
@@ -63,44 +63,38 @@ if reference_height not in [10, 100]:
     raise ValueError("Reference height must be 10 or 100 m.")
 
 # create data frame to append wind speeds at target height for each grid corner
-ExtrapolatedWindSpeed = pd.DataFrame({'Time': WindData['valid_time']})
+ExtrapolatedWindSpeed = pd.DataFrame()
+unique_times = ((WindData['valid_time'])
+      .drop_duplicates()
+      .sort_values()
+      .reset_index(drop=True)
+)
+ExtrapolatedWindSpeed['time'] = unique_times
 
 
-for lat, lon in locations[:-1]: 
-    # call function to produce dataframe containing wind speed at each location
-    WindSpdDir = wra.compute_and_plot_time_series(WindData,lat, lon, reference_height,display_figure=False)
-    # Also compute wind speeds at 10m and 100m (for dynamic alpha calculation)
+for lat, lon in locations: 
+    # Compute wind speeds at 10m and 100m (for dynamic alpha calculation)
     WindSpdDir_10m = wra.compute_and_plot_time_series(WindData, lat, lon, 10, display_figure=False)
     WindSpdDir_100m = wra.compute_and_plot_time_series(WindData, lat, lon, 100, display_figure=False)
     
     # access dataframe and extract wind speed at location
-    u_ref = WindSpdDir['speed']
+    #u_ref = WindSpdDir_10['speed']
     u_10 = WindSpdDir_10m['speed']
     u_100 = WindSpdDir_100m['speed']
 
     # Extrapolate using dynamic alpha
     extrapolated_speed = wra.extrapolate_wind_speed(
-        u_ref=u_ref,
+        u_ref=u_10,
         u_10=u_10,
         u_100=u_100,
         z_ref=reference_height,
         z_target=target_height
     )
 
+
     # Add extrapolated speed to DataFrame
-    ExtrapolatedWindSpeed[f'({lat},{lon})'] = extrapolated_speed
+    ExtrapolatedWindSpeed[f'Wind Spd ({lat},{lon})'] = extrapolated_speed.values
 
-
-# Clean and format column names from coordinate tuples
-new_columns = ["Time"]
-for col in ExtrapolatedWindSpeed.columns[1:]:
-    try:
-        lat, lon = eval(col)  # safely convert "(55.5, 7.75)" to tuple
-        new_columns.append(f"lat{lat}_lon{lon}")
-    except:
-        new_columns.append(str(col))  # fallback if not tuple
-
-ExtrapolatedWindSpeed.columns = new_columns
 
 # Save CSV
 csv_path = OUTPUT_DIR / 'extrapolated_wind_speeds.csv'
@@ -142,8 +136,11 @@ fig_path_weibull = OUTPUT_DIR / f'weibull_fit_{target_height}m.png'
 fig.savefig(fig_path_weibull)
 figures_to_show.append(fig)
 
+# appending direction to extrapolated wind speed values 
+ExtrapolatedWindSpeed['direction'] = WindSpdDir_10m['direction']
+
 # create wind rose figure 
-wra.plot_wind_rose(WindSpdDir['direction'], WindSpdDir['speed'], num_bins=8)
+wra.plot_wind_rose(ExtrapolatedWindSpeed['direction'], ExtrapolatedWindSpeed[f'({interpolation_lat},{interpolation_long})'], num_bins=8)
 
 # call function to plot power curve 
 wra.plot_power_curve(TURBINE_DATA)
@@ -207,9 +204,10 @@ print(f"\nAnnual Energy Production (AEP) for NREL 5 MW for 2005: {aep:.2f} kWh")
 
 # Dominant wind direction
 lat, lon = locations[0]
-df, _, _ = wra.compute_and_plot_time_series(WindData, lat, lon, 10)
+df = wra.compute_and_plot_time_series(WindData, lat, lon, 10,display_figure=False)
 dominant_dir, freq = wra.dominant_wind_direction(df['direction'])
 print(f"Dominant wind direction range: {dominant_dir} with {freq} occurrences.")
 
 # Show all collected figures at the end
 plt.show()
+
