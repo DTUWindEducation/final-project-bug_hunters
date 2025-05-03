@@ -5,9 +5,10 @@ Team: bug_hunters
 
 ## Overview
 
-This project centres on building a Python package that can be used to take provided ERA5 reanalysis data and processes it into practical wind‑resource insights for a chosen site. Using several years of hourly wind speed data collected at 10 m and 100 m heights as well as referance wind turbine data, the package can be used to process the data, producing the following results:
+This project centres on building a Python package that can be used to take provided ERA5 reanalysis data and processes it into practical wind‑resource insights for a chosen site. Using several years of hourly wind speed data collected at 10 m and 100 m heights as well as reference wind turbine data, the package can be used to process the data, producing the following results:
 
-        - Load and parse the data from an .nc file
+        - Load and parse the hourly wind speed data from an .nc file.
+        - Load and parse the reference wind turbine power data from a .csv file.
         - Generate wind speed and wind direction time series at 10 m and 100 m height at each of the four provided locations as well as for a chosen location within the specified grid. 
         - Compute a wind speed time series for a selected height for each of the gour provided locations. 
         - Fit a Weibull distribution for wind speed for a chosen location within the specified grid and at a selected height. 
@@ -55,7 +56,13 @@ The project was developed in two main parts: the creation of the package (WRA_pa
 
 ## Architecture
 
-ADD: description of architecture and class 
+The package takes the data files (hourly wind speed data and reference wind turbine power data) as input data. TThe data is then used as inputs to the functions contained in the DATA PROCESSING portion of the package. This loads and parses the data into usable formats. The reformatted data is then used in the TIME SERIES ANALYSIS portion fo the package to produce time series figures for the wind speed and direction. 
+
+To calculate the wind speed for a point within the defined grid, the WIND INTERPOLATOR class is used. This class takes the raw wind data (containing the U and V components of the wind) in conjunction with the latitude and longitude of each specified grid point and interpolates for the U and V components for a location within the grid. These components can then be used within the compute_and_plot_time_series function to cacluated the wind speed at a location within the grid. 
+
+The WIND EXTRAPOLATION portion of the package calculates wind speed for a specific height. The data from this portion of the package is then used within the WIND DIRECTION ANALYSIS and WEIBULL ANALYSIS portion of the package to conduct these two analyses for an interpolated grid point and desired height. 
+
+Finally, the ENERGY ESTIMATION portion of the package conducts analysis related to the power production of the reference (NREL 5 MW) turbine. A visual depiction of the described architecture is illustrated below. 
 
 ## Peer review
 
