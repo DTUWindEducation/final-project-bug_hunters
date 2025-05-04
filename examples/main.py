@@ -1,3 +1,4 @@
+#%%
 from pathlib import Path
 import numpy as np 
 import pandas as pd 
@@ -140,7 +141,7 @@ figures_to_show.append(fig)
 ExtrapolatedWindSpeed['direction'] = WindSpdDir_10m['direction']
 
 # create wind rose figure 
-wra.plot_wind_rose(ExtrapolatedWindSpeed['direction'], ExtrapolatedWindSpeed[f'({interpolation_lat},{interpolation_long})'], num_bins=8)
+wra.plot_wind_rose(ExtrapolatedWindSpeed['direction'], ExtrapolatedWindSpeed[f'Wind Spd ({interpolation_lat},{interpolation_long})'], num_bins=8)
 
 # call function to plot power curve 
 wra.plot_power_curve(TURBINE_DATA)
@@ -211,3 +212,5 @@ print(f"Dominant wind direction range: {dominant_dir} with {freq} occurrences.")
 # Show all collected figures at the end
 plt.show()
 
+
+# %%
