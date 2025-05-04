@@ -371,7 +371,7 @@ def fit_weibull_distribution(wind_speeds):
     shape, loc, scale = weibull_min.fit(wind_speeds, floc=0)  # force location to 0
     return shape, scale # Return the shape (k) and scale (A) parameters of the Weibull distribution
 
-def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
+def plot_wind_speed_with_weibull(wind_speeds, shape, scale, lat, lon, level="100m"):
     """
     Plot the wind speed distribution as a histogram and overlay the fitted Weibull PDF.
 
@@ -379,6 +379,8 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
         wind_speeds (array-like): Wind speed data [m/s].
         shape (float): Weibull shape parameter (k).
         scale (float): Weibull scale parameter (A).
+        lat (float): latitude of point for which data is being plotted. 
+        lon (float): longitude of point for which data is being plotted.
         level (str, optional): Height level for the wind data (e.g., "100m"). Default is "100m".
 
     Returns:
@@ -407,7 +409,7 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     ax.plot(x, weibull_pdf, 'r-', lw=2, label = f" Fitted Weibull PDF \n k= {round(shape,2)}, A = {round(scale,2)}")
 
     # Set the title and labels for the plot
-    ax.set_title(f"Wind Speed Distribution & Weibull Fit at {level}")
+    ax.set_title(f"Wind Speed Distribution & Weibull Fit at ({lat}°N {lon}°E) and {level}")
     ax.set_xlabel("Wind Speed [m/s]")
     ax.set_ylabel("Probability Density")
 
@@ -424,13 +426,16 @@ def plot_wind_speed_with_weibull(wind_speeds, shape, scale, level="100m"):
     return fig, ax
 
 
-def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30): 
+def plot_wind_rose(direction, speed, lat, lon, height, num_bins = 6, label_interval = 30): 
     """
     Plot a wind rose diagram showing the distribution of wind direction and speed.
 
     Parameters:
         direction (array-like): Wind direction data in degrees [0, 360).
         speed (array-like): Wind speed data [m/s].
+        lat (float): latitude coordinate of wind data.
+        lon (float): longitude coordinate of wind data.
+        height (float): height of wind data. 
         num_bins (int, optional): Number of bins for wind speed categories. Default is 6.
         label_interval (int, optional): Interval for wind direction labels in degrees. Default is 30.
 
@@ -460,10 +465,10 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
         )
 
     # Add a legend to the wind rose plot
-    ax.set_legend(loc=(-0.011, -0.09),title='Wind Speed [m/s]')
+    ax.set_legend(loc=(-0.2, -0.1),title='Wind Speed [m/s]')
 
     # Set the title for the wind rose plot
-    ax.set_title('Wind Rose')
+    ax.set_title(f'Wind Rose, ({lat}°N {lon}°E) at {height} m')
 
     # Get the figure object from the WindroseAxes
     fig = ax.figure
@@ -478,13 +483,14 @@ def plot_wind_rose(direction, speed, num_bins = 6, label_interval = 30):
     fig.savefig( output_dir / figurename, format="png", bbox_inches='tight')
 
 
-def plot_power_curve(file_path): 
+def plot_power_curve(file_path, ref_turbine = 'NREL 5 MW'): 
 
     """
     Plot the power curve of a wind turbine based on wind speed and power output data.
 
     Parameters:
         file_path (Path): Path to the CSV file containing wind speed and power data.
+        ref_turbine (str): string containing the name of the turbine for which power data is being plotted.
 
     Returns:
         None: Saves the plot as a PNG file in the output directory.
@@ -499,7 +505,7 @@ def plot_power_curve(file_path):
     axs.plot(df['Wind Speed [m/s]'],df['Power [kW]'])
 
     # Set the title and labels for the plot
-    axs.set_title("Power Curve")
+    axs.set_title(f"Power Curve, ({ref_turbine})")
     axs.set_xlabel('Wind Speed [m/s]')
     axs.set_ylabel('Power [kW]')
 
