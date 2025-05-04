@@ -83,6 +83,9 @@ for height in time_series_heights:
     for lat, lon in locations:
         wra.compute_and_plot_time_series(WindData, lat, lon, height)
 
+# Extract direction for interpolation point at 100m 
+InterpData = wra.compute_and_plot_time_series(WindData, interpolation_lat, interpolation_long, 100, display_figure=False)
+
 # 4. Compute wind speed time series at height z for the 
 # four provided locations using power law profile.
 
@@ -218,8 +221,10 @@ ExtrapolatedWindSpeed['direction'] = WindSpdDir_10m['direction']
 # and a given height.
 
 # create wind rose figure
+# assume wind direction is equivalent to 100 m wind direction 
+# since assignment verifies this assumption
 wra.plot_wind_rose(
-    ExtrapolatedWindSpeed['direction'],
+    InterpData['direction'],
     ExtrapolatedWindSpeed[
         f"Wind Spd ({interpolation_lat},"
         f"{interpolation_long})"
@@ -228,6 +233,7 @@ wra.plot_wind_rose(
     locations[-1][1],
     target_height,
     num_bins=8)
+
 
 # Call the function to separate data for the year 2005
 try:
@@ -305,7 +311,7 @@ lat, lon = locations[-1]
 
 # call function to calculate dominant wind direction
 dominant_dir, freq = wra.dominant_wind_direction(
-    ExtrapolatedWindSpeed['direction']
+    InterpData['direction']
     )
 print(
     f"Dominant wind direction range: {dominant_dir} with {freq} occurrences.")
