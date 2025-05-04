@@ -1,4 +1,3 @@
-#%%
 from pathlib import Path
 import numpy as np 
 import pandas as pd 
@@ -77,7 +76,6 @@ reference_height = 10
 target_height = 97
 
 
-
 # Extract the appropriate wind speed time series
 if reference_height not in [10, 100]:
     raise ValueError("Reference height must be 10 or 100 m.")
@@ -110,7 +108,6 @@ for lat, lon in locations:
         z_ref=reference_height,
         z_target=target_height
     )
-
 
     # Add extrapolated speed to DataFrame
     ExtrapolatedWindSpeed[f'Wind Spd ({lat},{lon})'] = extrapolated_speed.values
@@ -151,7 +148,7 @@ print(f"Scale (A): {scale:.3f}")
 'Plot wind speed distribution (histogram vs. fitted Weibull distribution) at a given location (inside the box) and a given height.'
 
 # --- Plot histogram with Weibull PDF overlay ---
-fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
+fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, locations[-1][0],locations[-1][1], level=f"{target_height}m")
 figures_to_show.append(fig)
 
 # Save figure in output file
@@ -165,7 +162,7 @@ ExtrapolatedWindSpeed['direction'] = WindSpdDir_10m['direction']
 'Plot wind rose diagram that showes the frequencies of different wind direction at a given location (inside the box) and a given height.'
 
 # create wind rose figure 
-wra.plot_wind_rose(ExtrapolatedWindSpeed['direction'], ExtrapolatedWindSpeed[f'Wind Spd ({interpolation_lat},{interpolation_long})'], num_bins=8)
+wra.plot_wind_rose(ExtrapolatedWindSpeed['direction'], ExtrapolatedWindSpeed[f'Wind Spd ({interpolation_lat},{interpolation_long})'],locations[-1][0], locations[-1][1],target_height, num_bins=8)
 
 # call function to plot power curve 
 wra.plot_power_curve(TURBINE_DATA)
@@ -173,10 +170,7 @@ wra.plot_power_curve(TURBINE_DATA)
 # Call the function to separate data for the year 2005
 try:
     WindData_2005 = wra.separate_data_by_year(WindData, 2005)
-    #print("WindData for the year 2005:")
-    #print(WindData_2005.head())
 except ValueError as e:
-     #print(e)
      WindData_2005 = None
 
 # Check if data for 2005 exists
@@ -240,5 +234,3 @@ print(f"Dominant wind direction range: {dominant_dir} with {freq} occurrences.")
 # Show all collected figures at the end
 plt.show()
 
-
-# %%
