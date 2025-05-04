@@ -17,46 +17,45 @@ This project centres on building a Python package that can be used to take provi
         - Plot the power curve for the NREL 5 MW turbine. 
         - Compute the dominant wind direction for the time span of the provided data sets. 
 
-The project was developed in two main parts: the creation of the package (WRA_package) where the functions for this package are contained in the __init__.py file, and the creation of the main.py script which illustrated how the package functions can be implemented and saves relevant data and figures produced by the script. In addition to these parts, tests were created to verify that the package functions behaved as expected, producing the expected results. The final result produces a package which can be utilized to conduct a wind resource assessment using reanalysis data. The package can be used to produce any of the previously described results for such an assessment. 
+The project was developed in two main parts: the creation of the package (WRA_package) where the functions for this package are contained in the __init__.py file, and the creation of the main.py script which illustrates how the package functions can be implemented and saves relevant data and figures produced by the script. In addition to these parts, tests were created to verify that the package functions behaved as expected, producing the expected results. The final project results in a package which can be utilized to conduct a wind resource assessment using reanalysis data. The package can be used to produce any of the previously described results for such an assessment. 
 
 
 ## Quick-start guide
 
 1. Clone the repository
 2. Note that the folder structure must not be changed after cloning the repository in order for the script in main.py to run.
-3. Open an anaconda prompt and cd into the cloned bug_hunters repo. Use the anaconda promtp to complete steps 4 - 7. 
+3. Open an anaconda prompt and cd into the cloned bug_hunters repo. Use the anaconda prompt to complete steps 4 - 7. 
 4. Create a new environment using the following command: 
 
         conda create -n <your environment name> python=3.11 -y 
+
 5. Activate the environment using the following command: 
 
         conda activate <your environment name> 
-6. Install the necessary packages required for the WRA_Package. The necessary packages are listed below: 
 
-        pandas 
-        matplot lib 
-        xarray 
-        netCDF4
-        pathlib 
-        scipy 
-        pytest 
-        windrose 
-        DOUBLE CHECK IF THERE ARE ANY OTHER REQUIRED PACKAGES
+6. Install the necessary packages required for the WRA_Package using the following command: 
+
+        pip install numpy pandas matplotlib xarray pathlib scipy pytest windrose netcdf4 h5netcdf
 
 7. Install the wind resource assessment package (WRA_Package) using the following command: 
 
         pip install -e .
+
 8. Ensure that the following data files are present in the 'inputs' folder: 
 
         1997-199.nc 
         2000-2002.nc
         2003-2005.nc
         2006-2008.nc 
+        Architecture_diagram(1).jpg
         NREL_Reference_5MW_126.csv
         NREL_Reference_15MW_240.csv
+
 9. When running the project in VS Code, make sure that you are using your newly created environment.
-10. Run main.py and the script will processes the multi-year hourly wind data and one of the data files containing the referance turbine data, producing the results described in the 'Overview' section
-11. The data and figures produced by the script will save locally in the cloned repo in the 'outputs' folder. 
+
+10. Run main.py and the script will processes the multi-year hourly wind data and the NREL 5 MW reference turbine data, producing the results described in the 'Overview' section.
+
+11. Relevant data and figures produced by the script will save locally in the cloned repo within the 'outputs' folder. 
 
 
 ## Architecture
@@ -74,9 +73,12 @@ Finally, the ENERGY ESTIMATION portion of the package conducts analysis related 
    
 ## Peer review
 
-Each team member was responsible for specific tasks, as shown below. Members reviewed eachothers work using pull requests. One member would create a pull request for their work, and a different members would review the work and accept the request if the work appeared sufficient. Feedback was provided for areas of each group members codes based on this pull request methodology. If an area of the code appeared incorrect or could be improved, this feedback was relayed to the group member responsible for that portion of the project. The group was frequently in communication using messages, video calls, or in-person meetins. Video calls and in-person meetings were often used to collaborate in order to solve issues which group members were encountering. These meetings were used as a time to brianstorm solutions to errors, collaborate on code, and assist in debugging. 
+Each team member was responsible for specific tasks, as shown below. Members reviewed eachothers work using pull requests. One member would create a pull request for their work, and a different members would review the work and accept the request if the work appeared sufficient. Feedback was provided for areas of each group members codes based on this pull request methodology. If an area of the code appeared incorrect or could be improved, this feedback was relayed to the group member responsible for that portion of the project. The group was frequently in communication using messages, video calls, or in-person meetings. Video calls and in-person meetings were often used to collaborate in order to solve issues which group members were encountering. These meetings were used as a time to brianstorm solutions to errors, collaborate on code, and assist in debugging. 
 
 Task delegation:
-Kali: Task 1,2,3, pylint score checking, README file,
+
+Kali: Task 1,2,3, pylint score checking, README file
+
 Tessa: Task 4,5,6, Collaboration.md, Architecture diagram
+
 Benni: Task 7,8, Collaboration.md, Docstrings, Comments
