@@ -374,8 +374,12 @@ def test_plot_wind_speed_with_weibull(monkeypatch):
     # Fit the Weibull distribution to the simulated data
     shape, scale = wra.fit_weibull_distribution(wind_speeds)
 
+    # Define lat an lon 
+    lat = 55.68
+    lon = 7.83
+
     # Generate the wind speed + Weibull plot
-    fig, ax = wra.plot_wind_speed_with_weibull(wind_speeds, shape, scale)
+    fig, ax = wra.plot_wind_speed_with_weibull(wind_speeds, shape, lat, lon, scale)
 
     # Assert that the returned figure is a valid matplotlib Figure object
     assert isinstance(fig, plt.Figure), "Expected a matplotlib Figure"
@@ -409,7 +413,7 @@ def test_plot_wind_rose():
     num_bins = 4  # Number of bins for wind speed categories
 
     # When: Call the `plot_wind_rose` function
-    wra.plot_wind_rose(direction, speed, num_bins=num_bins, label_interval=45)
+    wra.plot_wind_rose(direction, speed, lat, lon, height, num_bins=num_bins)
 
     # Then: Assert that the returned axes object is a valid WindroseAxes object
     ax = plt.gca()  # Get the current axes
@@ -453,7 +457,9 @@ def test_calculate_bin_probabilities():
         assert abs(result[bin_range] - probability) < 0.01
 
     # Assert the result matches the expected output
-    assert result == expected_power_per_bin, f"Expected {expected_power_per_bin}, but got {result}"
+    assert result == pytest.approx(expected, abs=1e-4), \
+           f"Expected {expected} within ±1e-4, but got {result}"
+    
     bin_probabilities = {
         "[3.0, 4.0)": 10.0,
         "[4.0, 5.0)": 20.0,

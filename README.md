@@ -15,7 +15,7 @@ This project centres on building a Python package that can be used to take provi
         - Plot a wind rose diagram for a specified location within the grid and height.
         - Compute the AEP of the NREL 5 MW turbine at a given location and height for a given year. 
         - Plot the power curve for the NREL 5 MW turbine. 
-        - Compute the dominant wind direction for the time span of the provided data sets. 
+        - Compute the dominant wind direction for the time span of the provided data sets for a location within the grid. 
 
 The project was developed in two main parts: the creation of the package (WRA_package) where the functions for this package are contained in the __init__.py file, and the creation of the main.py script which illustrates how the package functions can be implemented and saves relevant data and figures produced by the script. In addition to these parts, tests were created to verify that the package functions behaved as expected, producing the expected results. The final project results in a package which can be utilized to conduct a wind resource assessment using reanalysis data. The package can be used to produce any of the previously described results for such an assessment. 
 
@@ -35,7 +35,7 @@ The project was developed in two main parts: the creation of the package (WRA_pa
 
 6. Install the necessary packages required for the WRA_Package using the following command: 
 
-        pip install numpy pandas matplotlib xarray pathlib scipy pytest windrose netcdf4 h5netcdf
+        pip install numpy pandas matplotlib xarray pathlib scipy pytest windrose netcdf4 h5netcdf pytest-cov
 
 7. Install the wind resource assessment package (WRA_Package) using the following command: 
 
