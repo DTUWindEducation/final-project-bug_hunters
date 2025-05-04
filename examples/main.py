@@ -8,9 +8,27 @@ from matplotlib.patches import Patch
 import WRA_Package as wra
 from WRA_Package import load_data
 
+
+"""
+This script performs wind resource assessment (WRA) by processing wind data from multiple NetCDF files,
+computing wind speed and direction time series, extrapolating wind speeds to custom heights, fitting Weibull
+distributions, and calculating the Annual Energy Production (AEP) for a specified wind turbine.
+
+Steps:
+1. Load and parse multiple provided NetCDF4 files.
+2. Compute wind speed and wind direction time series at 10 m and 100 m heights for the four provided locations.
+3. Compute wind speed and wind direction time series for a given location inside the box bounded by the four locations.
+4. Extrapolate wind speed to a custom height using the power law profile.
+5. Fit a Weibull distribution to the extrapolated wind speed data.
+6. Plot wind speed distribution and wind rose diagrams.
+7. Calculate the AEP for a specified wind turbine at a given location and year.
+"""
+
+'Load and parse multiple provided netCDF4 files'
+
 # List to store all figures for final display
 figures_to_show =[]
-
+# Define file paths for input data (multiple files)
 FILE_PATH = Path(__file__)      # path to this file
 FILE_DIR = FILE_PATH.parent.parent     # path to main folder 
 DATA_DIR = FILE_DIR / 'inputs'
@@ -24,9 +42,10 @@ TURBINE_DATA = DATA_DIR / 'NREL_Reference_5MW_126.csv'
 OUTPUT_DIR = FILE_DIR / 'outputs' / 'data_files_you_generate'
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)  # ensure the folder exists
 
-
+'Compute wind speed and wind direction time series at 10 m and 100 m heights for the four provided locations.'
+'Compute wind speed and wind direction time series at 10 m and 100 m heights for a given location inside the box bounded by the four locations, such as the Horns Rev 1 site, using interpolation.'
 # define locations for each grid point as outlined by assignment
-locations = [(55.5, 7.75), (55.5, 8.00), (55.75, 7.75), (55.75, 8.00)]
+locations = [(55.5, 7.75), (55.5, 8.00), (55.75, 7.75), (55.75, 8.00)] # Four corners of the grid
 
 # specifying a location within the grid to interpolate for
 interpolation_lat =55.68
@@ -50,7 +69,7 @@ for height in time_series_heights:
     for lat, lon in locations: 
         wra.compute_and_plot_time_series(WindData,lat,lon,height)
 
-
+'Compute wind speed time series at height z for the four provided locations using power law profile.'
 # --- Extrapolate wind speed to a custom height ---
 # specify referance height
 reference_height = 10
@@ -121,12 +140,15 @@ extrapolated_speed_weibull = wra.extrapolate_wind_speed(
     z_target=target_height
 )
 
+'Fit Weibull distribution for wind speed at a given location (inside the box) and a given height.'
 # --- Fit Weibull distribution to extrapolated wind speed ---
 shape, scale = wra.fit_weibull_distribution(extrapolated_speed_weibull)
 
 print(f"\nWeibull distribution fitted parameters at {target_height} m:")
 print(f"Shape (k): {shape:.3f}")
 print(f"Scale (A): {scale:.3f}")
+
+'Plot wind speed distribution (histogram vs. fitted Weibull distribution) at a given location (inside the box) and a given height.'
 
 # --- Plot histogram with Weibull PDF overlay ---
 fig, ax = wra.plot_wind_speed_with_weibull(extrapolated_speed_weibull, shape, scale, level=f"{target_height}m")
@@ -139,6 +161,8 @@ figures_to_show.append(fig)
 
 # appending direction to extrapolated wind speed values 
 ExtrapolatedWindSpeed['direction'] = WindSpdDir_10m['direction']
+
+'Plot wind rose diagram that showes the frequencies of different wind direction at a given location (inside the box) and a given height.'
 
 # create wind rose figure 
 wra.plot_wind_rose(ExtrapolatedWindSpeed['direction'], ExtrapolatedWindSpeed[f'Wind Spd ({interpolation_lat},{interpolation_long})'], num_bins=8)
@@ -200,8 +224,12 @@ power_per_bin = wra.generate_power_per_bin(nrel_data)
 # Call the function to calculate AEP
 aep = wra.calculate_aep(bin_probabilities, power_per_bin)
 
+'Compute AEP of a specifed wind turbine (NREL 5 MW or NREL 15 MW) at a given location inside the box for a given year in the period we have provided the wind data.'
+
 # Print the calculated AEP
 print(f"\nAnnual Energy Production (AEP) for NREL 5 MW for 2005: {aep:.2f} kWh")
+
+'extra: Compute and print dominant wind direction'
 
 # Dominant wind direction
 lat, lon = locations[0]
